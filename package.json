@@ -1,0 +1,18 @@
+{
+  "name": "opendaydialogueeditor",
+  "version": "1.0.0",
+  "description": "An editor for Open Day Dialogue",
+  "main": "index.js",
+  "dependencies": {
+    "app-root-path": "^2.0.1",
+    "electron": "^1.7.12",
+    "indent-string": "^3.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "colinator27",
+  "license": "MIT"
+}

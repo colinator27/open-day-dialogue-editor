@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Project Info</title>
+        <link href="style.css" rel="stylesheet" type="text/css">
+    </head>
+    <body style="display:none;">
+        <center>
+            <h1>Project info</h1>
+            <div class="float-left">
+                <p class="label">Name: </p><input type="text" id="name" placeholder="Project name">
+                <p class="label">Author: </p><input type="text" id="author" placeholder="Project author">
+            </div>
+            <p>Info: <textarea id="info" placeholder="Project info" cols="40" rows="2"></textarea></p>
+            <span id="buttonAppear"></span>
+        </center>
+        <script type="text/javascript">
+            const { ipcRenderer } = require('electron');
+
+            var updated = false;
+            function update(){
+                if(updated)
+                    return;
+                updated = true;
+                document.querySelector("#buttonAppear").innerHTML = "<button type=\"button\" id=\"saveChanges\">Done</button>";
+                document.querySelector("#saveChanges").addEventListener('click', () => {
+                    var name = document.querySelector("#name").value;
+                    var author = document.querySelector("#author").value;
+                    var info = document.querySelector("#info").value;
+                    if (name == "" || author == ""){
+                        ipcRenderer.sendSync('sync-bad-fields-0', {});
+                        return;
+                    }
+                    ipcRenderer.sendSync('sync-update-project-info', { name: name, author: author, info: info });
+                });
+            }
+            
+            ipcRenderer.on('async-get-project-info-response', (event, arg) => {
+                document.querySelector("#name").value = arg.name;
+                document.querySelector("#author").value = arg.author;
+                document.querySelector("#info").value = arg.info;
+                document.body.removeAttribute('style');
+            });
+            ipcRenderer.send('async-get-project-info', {});
+
+            document.querySelector("#name").oninput = update;
+            document.querySelector("#author").oninput = update;
+            document.querySelector("#info").oninput = update;
+        </script>
+    </body>
+</html>

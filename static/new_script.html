@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>New Script</title>
+        <link href="style.css" rel="stylesheet" type="text/css">
+        <script type="text/javascript" src="language.js"></script>
+    </head>
+    <body>
+        <center>
+            <h1>Create a new script</h1>
+            <div class="float-left">
+                <p class="label">Name: </p><input type="text" id="name" placeholder="Script name">
+            </div>
+            <button type="button" id="create">Create</button>
+        </center>
+        <script type="text/javascript">
+            const { ipcRenderer } = require('electron');
+
+            document.querySelector("#create").addEventListener('click', () => {
+                var name = document.querySelector("#name").value;
+                if (name == ""){
+                    ipcRenderer.sendSync('sync-bad-fields-0', {});
+                    return;
+                }
+                ipcRenderer.sendSync('sync-new-script', { name: name });
+            });
+        </script>
+    </body>
+</html>

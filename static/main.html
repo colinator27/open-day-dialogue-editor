@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link href="style.css" rel="stylesheet" type="text/css">
+        <link href="./jquery/jquery-ui.min.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <span id="no-project">
+            <p>No project is currently loaded.</p>
+            <p>Either create a new project under <code>File -> New Project</code> or load an existing project under <code>File -> Open Project</code>.</p>
+            <br>
+        </span>
+        <div class="editor-container" style="display:none;">
+            <div class="editor-header">
+                <p class="editor-header-current"><span class="editor-header-current-namespace">Unnamed.</span><span class="editor-header-current-name">Unnamed</span></p>
+                <p class="editor-header-pos">Col: 0, Row: 0</p>
+            </div>
+            <div id="editor">// Enter your script here</div>
+        </div>
+        <form>
+            <ul id="list" class="list" style="display:none">
+                <ol class="list-group">
+                    <p>Scenes</p>
+                    <!--li class="list-node list-add">
+                        <p>Create new...</p>
+                    </li-->
+                </ol>
+                <ol class="list-group">
+                    <p>Definition Groups</p>
+                    <!--li class="list-node list-add">
+                        <p>Create new...</p>
+                    </li-->
+                </ol>
+                <ol class="list-group">
+                    <p>Scripts</p>
+                    <!--li class="list-node list-add">
+                        <p>Create new...</p>
+                    </li-->
+                </ol>
+            </ul>
+        </form>
+        <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+        <script src="./ace/ace.js" type="text/javascript" charset="utf-8"></script>
+        <script src="./jquery/jquery-3.3.1.min.js" type="text/javascript"></script>
+        <script src="./jquery/jquery-ui.min.js" type="text/javascript"></script>
+        <script>if (window.module) module = window.module;</script>
+        <script src="editor.js" type="text/javascript"></script>
+    </body>
+</html>

@@ -1,0 +1,251 @@
+@font-face {
+	font-family: 'Dreamt';
+	src: url('Dreamt.eot'),
+		 url('Dreamt.woff') format('woff'),
+		 url('Dreamt.ttf') format('truetype');
+}
+
+html, body {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+h1 {
+    font-size: 36px;
+    font-style: bold;
+    font-family: 'Dreamt';
+    color: #000;
+}
+
+p {
+    font-size: 24px;
+    font-family: 'Dreamt';
+    color: #000;
+}
+
+body {
+    background-color: rgb(245, 245, 245);
+}
+
+code {
+    color: #ddd !important;
+    background-color: #666;
+    border-radius: 2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-family: 'Dreamt';
+    color: #000;
+}
+
+.opendaydialogue {
+    width: 100%;
+}
+
+.odc {
+    width: 100%;
+}
+
+input[type=text] {
+    width: 60%;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    box-sizing: border-box;
+    font-size: 18px;
+    font-family: 'Dreamt';
+    color: #000;
+}
+
+textarea {
+    width: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 8px;
+    padding-bottom: 0px;
+    box-sizing: border-box;
+    resize: none;
+    font-size: 18px;
+    font-family: 'Dreamt';
+    color: #000;
+    margin-bottom: 0px;
+}
+
+button {
+    width: 30%;
+    box-sizing: border-box;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: 18px;
+    font-family: 'Dreamt';
+    color: #000;
+}
+
+.float-left {
+    display: inline-block;
+    width: 100%;
+    margin-bottom: -35px;
+}
+
+.label {
+    float: left;
+    clear: left;
+    width: 25%;
+    text-align: right;
+    position: relative;
+    bottom: 16px;
+    right: 8px;
+}
+
+input {
+    float: left;
+}
+
+.editor-container {
+    width: 100%;
+    height: 100%;
+    display: block;
+    position: absolute;
+    padding: 0;
+    margin: 0;
+    top: 0;
+}
+
+.editor-header {
+    width: 72.4%;
+    float: right;
+    height: 6%;
+    background-color: #ebebeb;
+}
+
+.editor-header-current {
+    margin: 0;
+    padding-top: 10px;
+    padding-left: 15px;
+    display: inline-block;
+}
+
+.editor-header-pos {
+    margin: 0;
+    padding-top: 10px;
+    padding-left: 25px;
+    display: inline-block;
+}
+
+.ace_editor {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    font-size: 18px;
+    width: 72.4%;
+    height: 94%;
+    float: right;
+    position: absolute;
+}
+
+.list {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 28%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    padding-top: 10px;
+    background-color: #fff;
+    border-right-style: solid;
+    border-right-width: 1px;
+    border-right-color: #222;
+    font-family: "Consolas", monospace;
+    max-height: 100%;
+    overflow: auto;
+}
+
+.list-node {
+    width: 100%;
+    height: 48px;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-bottom-color: #444;
+    background-color: #eee;
+    font-family: "Consolas", monospace;
+}
+
+.list-node:hover {
+    background-color: rgb(187, 206, 255);
+    border-radius: 2px;
+}
+
+.ui_selecting {
+    background-color: rgb(60, 112, 255) !important;
+    border-radius: 2px;
+}
+
+.ui-selected {
+    background-color: rgb(131, 164, 255) !important;
+    border-radius: 2px;
+}
+
+.list-node > p {
+    padding-left: 40px;
+    padding-top: 3px;
+    margin: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.list-node > h3 {
+    padding-left: 40px;
+    margin-top: -2px;
+    color: #888;
+    font-weight: normal;
+    font-family: 'Dreamt';
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.list-group {
+    margin-bottom: 10px;
+    width: 80%;
+}
+
+.list-group > p {
+    color: #555;
+    font-family: 'Dreamt';
+    margin-left: -20px;
+    margin-bottom: 8px;
+}
+
+ul, ol {
+    list-style: none;
+}
+
+.list-add {
+    margin-top: 10px;
+}
+
+.list-add > p {
+    text-align: center;
+    padding-left: 0px;
+    padding-top: 12px;
+}
+
+a {
+    color: #000;
+    text-decoration: none;
+}
+
+.ace_scrollbar {
+    display: block;
+    margin-right: 8px;
+}
+
+.editor-header-current-namespace {
+    color: #999;
+}
