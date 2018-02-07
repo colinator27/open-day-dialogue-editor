@@ -2,7 +2,7 @@
   "name": "opendaydialogueeditor",
   "version": "1.0.0",
   "description": "An editor for Open Day Dialogue",
-  "main": "index.js",
+  "main": "app/index.js",
   "dependencies": {
     "app-root-path": "^2.0.1",
     "electron": "^1.7.12",

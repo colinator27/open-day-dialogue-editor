@@ -20,7 +20,7 @@ function changesMade(){
 
 function getRootDir(){
     // Convert to .asar path for builds
-    return require('app-root-path').toString();
+    return require('app-root-path').toString() + "/app";
 }
 
 ipcMain.on('sync-new-project', (event, arg) => {
@@ -172,7 +172,7 @@ function getAllCode(proj){
         var scene = proj.scenes[s];
 
         code += `scene ${s}:\n`;
-        code += indentString(scene.text.replaceAll("\r", ""), 4) + "\n";
+        code += indentString(scene.text.replaceAll("\r", ""), 4, { includeEmptyLines: true }) + "\n";
     }
 
     for(var d in proj.definitionGroups){
@@ -180,7 +180,7 @@ function getAllCode(proj){
         var group = proj.definitionGroups[d];
 
         code += `definitions ${d}:\n`;
-        code += indentString(group.text.replaceAll("\r", ""), 4) + "\n";
+        code += indentString(group.text.replaceAll("\r", ""), 4, { includeEmptyLines: true }) + "\n";
     }
 
     proj.scripts.forEach(script => {
