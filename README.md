@@ -4,7 +4,7 @@ A project editor for the Open Day Dialogue programming language.
 ![Screenshot](https://github.com/colinator27/open-day-dialogue-editor/blob/master/screenshots/1.png)
 
 ### What is Open Day Dialogue?
-Open Day Dialogue is a dialogue system, inspired by others such as [Yarn](https://github.com/InfiniteAmmoInc/Yarn), with the goal of making it easier for (non-programmer) writers to write the dialogue, and ease the stress on programmers. Writing dialogue with "real" code can get complicated.
+Open Day Dialogue is a dialogue system for games, inspired by others such as [Yarn](https://github.com/InfiniteAmmoInc/Yarn), with the goal of making it easier for (non-programmer) writers to write dialogue while easing stress on programmers. Writing dialogue with "real" code can get complicated.
 
 Open Day Dialogue is designed so that it should run with most game engines- as long as an interpreter is written for it. The system is split into three parts: the editor (this repository), the compiler, and the engine-specific interpreters.
 
