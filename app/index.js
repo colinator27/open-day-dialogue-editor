@@ -335,12 +335,13 @@ ipcMain.on('sync-tree-reorder', (event, arg) => {
     } else if(arg.type == "Scripts"){
         let oldItems = {};
         for(let i = 0; i < currentProject.scripts.length; i++){
-            oldItems[currentProject.scripts[i].name] = currentProject.scripts[i].text;
+            oldItems[currentProject.scripts[i].name] = currentProject.scripts[i];
         }
         let newItems = [];
         for(let i = 0; i < arg.order.length; i++){
             newItems[i] = oldItems[arg.order[i]];
         }
+        currentProject.scripts = newItems;
     }
     event.returnValue = 0;
 });
