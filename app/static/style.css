@@ -15,12 +15,16 @@ h1 {
     font-style: bold;
     font-family: 'Dreamt';
     color: #000;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 p {
     font-size: 24px;
     font-family: 'Dreamt';
     color: #000;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 body {
@@ -71,6 +75,11 @@ textarea {
     font-family: 'Dreamt';
     color: #000;
     margin-bottom: 0px;
+    outline: none;
+    overflow: auto;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
 }
 
 button {
@@ -83,6 +92,21 @@ button {
     font-size: 18px;
     font-family: 'Dreamt';
     color: #000;
+    background-color: #fff;
+    border-width: 1px;
+    border-color: #000;
+    outline: none;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none;
+    box-shadow: none;
+}
+
+button:hover {
+    background-color: #ccc;
+}
+
+button:active {
+    background-color: #bbb;
 }
 
 .float-left {
@@ -197,6 +221,8 @@ input {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 .list-node > h3 {
@@ -208,6 +234,8 @@ input {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 .list-group {
@@ -220,6 +248,8 @@ input {
     font-family: 'Dreamt';
     margin-left: -20px;
     margin-bottom: 8px;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 ul, ol {
@@ -248,4 +278,27 @@ a {
 
 .editor-header-current-namespace {
     color: #999;
+}
+
+.zoom-button {
+    position: relative;
+    float: right;
+    width: 6%;
+    right: 10px;
+    margin-right: 10px;
+    margin-top: 7px;
+}
+
+.vspace {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.sorting {
+    background-color: #aaa;
+}
+
+.smallermargin {
+    margin-top: 20px;
+    margin-bottom: 20px;
 }

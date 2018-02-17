@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Edit item</title>
+        <link href="style.css" rel="stylesheet" type="text/css">
+        <script type="text/javascript" src="language.js"></script>
+    </head>
+    <body style="display:none;">
+        <center>
+            <div class="float-left">
+                <p class="label smallermargin">Name: </p><input type="text" id="name" placeholder="New name">
+                <div id="namespaceholder"><p class="label smallermargin">Namespace: </p><input type="text" id="namespace" placeholder="New namespace"></div>
+            </div>
+            <div class="vspace"></div>
+            <button type="button" id="save">Save</button>
+        </center>
+        <script type="text/javascript">
+            const { ipcRenderer } = require('electron');
+            
+            var hasNamespace = true;
+
+            ipcRenderer.on('data', (ev, arg) => {
+                if (arg.namespace == undefined){
+                    document.querySelector("#namespaceholder").remove();
+                    hasNamespace = false;
+                    document.querySelector("#name").value = arg.name;
+                } else {
+                    document.querySelector("#name").value = arg.name;
+                    document.querySelector("#namespace").value = arg.namespace;
+                }
+                document.body.setAttribute('style', '');
+            });
+
+            document.querySelector("#save").addEventListener('click', () => {
+                let name = document.querySelector("#name").value;
+                if (name == ""){
+                    ipcRenderer.sendSync('sync-bad-fields-0', {});
+                    return;
+                }
+                let namespace;
+                if (hasNamespace){
+                    namespace = document.querySelector("#namespace").value;
+                }
+                ipcRenderer.sendSync('sync-item-edit', { name: name, namespace: namespace });
+            });
+        </script>
+    </body>
+</html>

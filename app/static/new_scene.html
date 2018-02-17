@@ -12,6 +12,7 @@
                 <p class="label">Name: </p><input type="text" id="name" placeholder="Scene name">
                 <p class="label">Namespace: </p><input type="text" id="namespace" placeholder="Scene namespace">
             </div>
+            <div class="vspace"></div>
             <button type="button" id="create">Create</button>
         </center>
         <script type="text/javascript">
@@ -26,6 +27,7 @@
                 }
                 if (!isStringValid(name) || !isStringValid(namespace)){
                     ipcRenderer.sendSync('sync-bad-fields-1', {});
+                    return;
                 }
                 ipcRenderer.sendSync('sync-new-scene', { name: name, namespace: namespace });
             });

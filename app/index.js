@@ -6,14 +6,12 @@ const fs = require('fs');
 const {app, BrowserWindow, Menu, dialog, ipcMain, globalShortcut} = electron;
 
 let mainWindow, mainWindowMenu;
-let newProjectWindow, newItemWindow, projectInfoWindow;
+let newProjectWindow, newItemWindow, projectInfoWindow, editWindow;
 let currentProjectFilename = undefined;
 let currentProject = undefined;
 let madeAnyChanges = false;
 
 function changesMade(){
-    if(madeAnyChanges)
-        return;
     madeAnyChanges = true;
     mainWindow.setTitle(`Open Day Dialogue Editor - ${currentProject.name}*`);
 }
@@ -23,7 +21,102 @@ function getRootDir(){
     return require('app-root-path').toString() + "/app";
 }
 
+// Verifies that the project is not corrupt
+function verifyProjectIntegrity(proj, special = false){
+    // Check that the base fields exist
+    if (!proj.name || !proj.author || !proj.info || !proj.scenes || !proj.definitionGroups || !proj.scripts)
+        return false;
+
+    if(!special){
+        // Check scenes
+        if(proj.scenes === null || typeof proj.scenes !== 'object')
+            return false;
+        for(var s in proj.scenes){
+            if(!proj.scenes.hasOwnProperty(s)) continue;
+            let scene = proj.scenes[s];
+            if (!scene.name || scene.namespace == undefined || scene.text == undefined)
+                return false;
+        }
+
+        // Check defintion groups
+        if(proj.definitionGroups === null || typeof proj.definitionGroups !== 'object')
+            return false;
+        for(var d in proj.definitionGroups){
+            if(!proj.definitionGroups.hasOwnProperty(d)) continue;
+            let group = proj.definitionGroups[d];
+            if (!group.name || group.namespace == undefined || group.text == undefined)
+                return false;
+        }
+    }
+
+    // Check scripts
+    if (!Array.isArray(proj.scripts))
+        return false;
+    proj.scripts.forEach(script => {
+        if (!script.name || script.text == undefined)
+            return false;
+    });
+
+    return true;
+}
+
+// Properly serializes the JSON, in order
+function getProjectJSON(){
+    let out = Object.assign({}, currentProject);
+
+    // Convert scenes to array
+    out.scenes = [];
+    for(var s in currentProject.scenes){
+        if(!currentProject.scenes.hasOwnProperty(s)) continue;
+        let scene = currentProject.scenes[s];
+        out.scenes.push({ key: s, name: scene.name, namespace: scene.namespace, text: scene.text });
+    }
+
+    // Convert def groups to array
+    out.definitionGroups = [];
+    for(var d in currentProject.definitionGroups){
+        if(!currentProject.definitionGroups.hasOwnProperty(d)) continue;
+        let group = currentProject.definitionGroups[d];
+        out.definitionGroups.push({ key: d, name: group.name, namespace: group.namespace, text: group.text });
+    }
+
+    return JSON.stringify(out);
+}
+
+// Properly de-serializes the JSON, in order
+function makeProjectFromJSON(json){
+    let raw;
+    try {
+        raw = JSON.parse(json);
+    } catch (e){
+        return {};
+    }
+    if(!verifyProjectIntegrity(raw, true))
+        return {};
+    let out = Object.assign({}, raw);
+
+    // Convert scene array to an object
+    out.scenes = {};
+    for(let i = 0; i < raw.scenes.length; i++){
+        if (raw.scenes[i].key == undefined || raw.scenes[i].name == undefined || raw.scenes[i].namespace == undefined || raw.scenes[i].text == undefined)
+            return {};
+        out.scenes[raw.scenes[i].key] = { name: raw.scenes[i].name, namespace: raw.scenes[i].namespace, text: raw.scenes[i].text };
+    }
+
+    // Convert def group array to an object
+    out.definitionGroups = {};
+    for(let i = 0; i < raw.definitionGroups.length; i++){
+        if (raw.definitionGroups[i].key == undefined || raw.definitionGroups[i].name == undefined || raw.definitionGroups[i].namespace == undefined || raw.definitionGroups[i].text == undefined)
+            return {};
+        out.definitionGroups[raw.definitionGroups[i].key] = { name: raw.definitionGroups[i].name, namespace: raw.definitionGroups[i].namespace, text: raw.definitionGroups[i].text };
+    }
+
+    return out;
+}
+
+// Create a new project
 ipcMain.on('sync-new-project', (event, arg) => {
+    // Initialize a blank project object
     currentProject = {
         name: arg.name,
         author: arg.author,
@@ -32,36 +125,53 @@ ipcMain.on('sync-new-project', (event, arg) => {
         definitionGroups: {},
         scripts: []
     };
+    currentProjectFilename = undefined;
+
+    // Enable menus, change title, hide new project window
     enableProjectMenus();
     newProjectWindow.hide();
     newProjectWindow.reload();
+
+    // Note this next line is kind of useless but we'll keep it here
     mainWindow.setTitle(`Open Day Dialogue Editor - ${currentProject.name}`);
-    mainWindow.webContents.send('async-project-loaded', { currProject: currentProject });
+    
+    // Update the tree, etc.
+    mainWindow.webContents.send('async-project-loaded', { currProject: JSON.stringify(currentProject) });
+
+    // There are new unsaved changes
     changesMade();
+
     event.returnValue = 0;
 });
 
+// Create a new scene
 ipcMain.on('sync-new-scene', (event, arg) => {
-    currentProject.scenes[arg.namespace + "." + arg.name] = { name: arg.name, namespace: arg.namespace, text: "// Enter your scene here" };
-    mainWindow.webContents.send('async-update-tree', { currProject: currentProject });
+    currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name] = { name: arg.name, namespace: arg.namespace, text: "// Enter your scene here" };
+    mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
     event.returnValue = 0;
+    changesMade();
     newItemWindow.close();
 });
 
+// Create a new definition group
 ipcMain.on('sync-new-defgroup', (event, arg) => {
-    currentProject.definitionGroups[arg.namespace + "." + arg.name] = { name: arg.name, namespace: arg.namespace, text: "// Enter your definitions here" };
-    mainWindow.webContents.send('async-update-tree', { currProject: currentProject });
+    currentProject.definitionGroups[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name] = { name: arg.name, namespace: arg.namespace, text: "// Enter your definitions here" };
+    mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
     event.returnValue = 0;
+    changesMade();
     newItemWindow.close();
 });
 
+// Create a new script
 ipcMain.on('sync-new-script', (event, arg) => {
     currentProject.scripts.push({ name: arg.name, text: "// Enter your script here" });
-    mainWindow.webContents.send('async-update-tree', { currProject: currentProject });
+    mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
     event.returnValue = 0;
+    changesMade();
     newItemWindow.close();
 });
 
+// When updating the project info
 ipcMain.on('sync-update-project-info', (event, arg) => {
     currentProject.name = arg.name;
     currentProject.author = arg.author;
@@ -71,54 +181,195 @@ ipcMain.on('sync-update-project-info', (event, arg) => {
     event.returnValue = 0;
 });
 
+let editLastNode = undefined;
+ipcMain.on('sync-item-edit', (event, arg) => {
+    editWindow.close();
+    if(editLastNode.type == "Scenes"){
+        // Get the old and new keys 
+        let old_key = (editLastNode.namespace != undefined && editLastNode.namespace) != "" 
+                        ? (editLastNode.namespace + "." + editLastNode.name) 
+                        : editLastNode.name;
+        let new_key = (arg.namespace != undefined && arg.namespace != "")
+                        ? (arg.namespace + "." + arg.name)
+                        : arg.name;
+
+        // Figure out the order
+        let scenes_old = Object.assign({}, currentProject.scenes);
+        let i = 0;
+        let insert_index = -1;
+        for(var s in currentProject.scenes){
+            if(!currentProject.scenes.hasOwnProperty(s)) continue;
+            if(s == old_key)
+                insert_index = i;
+            i++;
+        }
+
+        // Move the property
+        currentProject.scenes = {};
+        i = 0;
+        for (var s in scenes_old){
+            if(!scenes_old.hasOwnProperty(s)) continue;
+            if(i == insert_index){
+                // Configure the new property
+                currentProject.scenes[new_key] = scenes_old[old_key];
+                currentProject.scenes[new_key].name = arg.name;
+                currentProject.scenes[new_key].namespace = arg.namespace;
+            } else {
+                // Copy the old property over
+                currentProject.scenes[s] = scenes_old[s];
+            }
+            i++;
+        }
+    } else if(editLastNode.type == "Definition Groups"){
+        // Get the old and new keys 
+        let old_key = (editLastNode.namespace != undefined && editLastNode.namespace) != "" 
+                        ? (editLastNode.namespace + "." + editLastNode.name) 
+                        : editLastNode.name;
+        let new_key = (arg.namespace != undefined && arg.namespace != "")
+                        ? (arg.namespace + "." + arg.name)
+                        : arg.name;
+
+        // Figure out the order
+        let defgroups_old = Object.assign({}, currentProject.definitionGroups);
+        let i = 0;
+        let insert_index = -1;
+        for(var s in currentProject.definitionGroups){
+            if(!currentProject.definitionGroups.hasOwnProperty(s)) continue;
+            if(s == old_key)
+                insert_index = i;
+            i++;
+        }
+
+        // Move the property
+        currentProject.definitionGroups = {};
+        i = 0;
+        for (var s in defgroups_old){
+            if(!defgroups_old.hasOwnProperty(s)) continue;
+            if(i == insert_index){
+                // Configure the new property
+                currentProject.definitionGroups[new_key] = defgroups_old[old_key];
+                currentProject.definitionGroups[new_key].name = arg.name;
+                currentProject.definitionGroups[new_key].namespace = arg.namespace;
+            } else {
+                // Copy the old property over
+                currentProject.definitionGroups[s] = defgroups_old[s];
+            }
+            i++;
+        }
+    } else if(editLastNode.type == "Scripts"){
+        for(let i = 0; i < currentProject.scripts.length; i++){
+            if(currentProject.scripts[i].name == editLastNode.name){
+                currentProject.scripts[i].name = arg.name;
+            }
+        }
+    }
+    mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
+    changesMade();
+});
+
+// Context menu when clicking on item in tree
 ipcMain.on('async-list-node-context', (event, arg) => {
     let m = Menu.buildFromTemplate([
         {
-            label: 'Rename',
+            label: 'Edit',
             click(){
+                editLastNode = arg;
+                editWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'Edit item', show: false, width: 600, height: 200, resizable: false });
+                editWindow.loadURL(url.format({
+                    pathname: path.join(getRootDir(), '/static/edit.html'),
+                    protocol: 'file:',
+                    slashes: true
+                }));
+                editWindow.setMenu(null);
+                editWindow.once('ready-to-show', () => {
+                    editWindow.show();
+                    editWindow.webContents.send('data', { name: arg.name, namespace: arg.namespace });
+                });
                 m.closePopup();
             }
         },
         {
             label: 'Delete',
             click(){
-                if(arg.type == "Scenes"){
-                    delete currentProject.scenes[arg.namespace + "." + arg.name];
-                } else if(arg.type == "Definition Groups"){
-                    delete currentProject.definitionGroups[arg.namespace + "." + arg.name];
-                } else if(arg.type == "Scripts"){
-                    delete currentProject.scripts[arg.namespace + "." + arg.name];
-                }
-                changesMade();
+                dialog.showMessageBox(mainWindow, { title: 'Delete item?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: `Are you sure you want to delete item "${arg.name}" permanently?` }, (number, checked) => {
+                    if (number == 0){
+                        if(arg.type == "Scenes"){
+                            delete currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name];
+                        } else if(arg.type == "Definition Groups"){
+                            delete currentProject.definitionGroups[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name];
+                        } else if(arg.type == "Scripts"){
+                            for(let i = 0; i < currentProject.scripts.length; i++){
+                                if(currentProject.scripts[i].name == arg.name){
+                                    currentProject.scripts.splice(i, 1);
+                                    break;
+                                }
+                            }
+                        }
+                        changesMade();
+                        mainWindow.webContents.send('async-item-deleted', arg);
+                    }
+                });
                 m.closePopup();
-                mainWindow.webContents.send('async-item-deleted', arg);
             }
         }
     ]);
     m.popup();
 });
 
+// Called when the project tree's order has been changed
+ipcMain.on('sync-tree-reorder', (event, arg) => {
+    if(arg.type == "Scenes"){
+        let oldItems = currentProject.scenes;
+        let newItems = {};
+        for(let i = 0; i < arg.order.length; i++){
+            newItems[arg.order[i]] = oldItems[arg.order[i]];
+        }
+        currentProject.scenes = newItems;
+    } else if(arg.type == "Definition Groups"){
+        let oldItems = currentProject.definitionGroups;
+        let newItems = {};
+        for(let i = 0; i < arg.order.length; i++){
+            newItems[arg.order[i]] = oldItems[arg.order[i]];
+        }
+        currentProject.definitionGroups = newItems;
+    } else if(arg.type == "Scripts"){
+        let oldItems = {};
+        for(let i = 0; i < currentProject.scripts.length; i++){
+            oldItems[currentProject.scripts[i].name] = currentProject.scripts[i].text;
+        }
+        let newItems = [];
+        for(let i = 0; i < arg.order.length; i++){
+            newItems[i] = oldItems[arg.order[i]];
+        }
+    }
+    event.returnValue = 0;
+});
+
+// Called when new unsaved changes are made
 ipcMain.on('sync-changes-made', (event, arg) => {
     changesMade();
     event.returnValue = 0;
-})
+});
 
+// Displays an error about blank fields
 ipcMain.on('sync-bad-fields-0', (event, arg) => {
-    dialog.showMessageBox(newProjectWindow, { title: 'Improper fields', type: 'error', message: 'Name and author fields must be filled!' }, (number, checked) => {});
+    dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {});
     event.returnValue = 0;
 });
 
+// Displays an error of invalid characters used in a name/identifier
 ipcMain.on('sync-bad-fields-1', (event, arg) => {
-    dialog.showMessageBox(newProjectWindow, { title: 'Improper fields', type: 'error', message: 'Only A-z, 0-9, _, and . characters can be used in names. They must start with either A-z or _.' }, (number, checked) => {});
+    dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {});
     event.returnValue = 0;
 });
 
+// Gets the text content of an item
 ipcMain.on('sync-get-item-text', (event, arg) => {
     let txt = "// An error occurred when getting the content of the item.";
     if(arg.type == "Scenes"){
-        txt = currentProject.scenes[arg.namespace + "." + arg.name].text;
+        txt = currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name].text;
     } else if(arg.type == "Definition Groups"){
-        txt = currentProject.definitionGroups[arg.namespace + "." + arg.name].text;
+        txt = currentProject.definitionGroups[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name].text;
     } else if(arg.type == "Scripts"){
         currentProject.scripts.forEach(s => {
             if(s.name == arg.name)
@@ -128,11 +379,12 @@ ipcMain.on('sync-get-item-text', (event, arg) => {
     event.returnValue = txt;
 });
 
+// Updates the text content of an item
 ipcMain.on('sync-update-item-text', (event, arg) => {
     if(arg.type == "Scenes"){
-        currentProject.scenes[arg.namespace + "." + arg.name].text = arg.text;
+        currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name].text = arg.text;
     } else if(arg.type == "Definition Groups"){
-        currentProject.definitionGroups[arg.namespace + "." + arg.name].text = arg.text;
+        currentProject.definitionGroups[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name].text = arg.text;
     } else if(arg.type == "Scripts"){
         for (var index in currentProject.scripts){
             if(currentProject.scripts[index].name == arg.name){
@@ -144,10 +396,12 @@ ipcMain.on('sync-update-item-text', (event, arg) => {
     event.returnValue = 0;
 });
 
+// Returns project info data
 ipcMain.on('async-get-project-info', (event, arg) => {
     event.sender.send('async-get-project-info-response', { name: currentProject.name, author: currentProject.author, info: currentProject.info });
 });
 
+// Enables certain application menu options once a project is loaded
 function enableProjectMenus(){
     mainWindowMenu.items[0].submenu.items[3].enabled = true;
     mainWindowMenu.items[0].submenu.items[4].enabled = true;
@@ -158,15 +412,17 @@ function enableProjectMenus(){
     mainWindowMenu.items[1].submenu.items[3].enabled = true;
 }
 
+// Replaces all instances of a sub-string in a string
 String.prototype.replaceAll = function(target, replacement) {
     return this.split(target).join(replacement);
 };
 
+// Code that formats the whole project as valid Open Day Dialogue code
 const indentString = require('indent-string');
-
 function getAllCode(proj){
     let code = "";
 
+    // Write scenes
     for(var s in proj.scenes){
         if(!proj.scenes.hasOwnProperty(s)) continue;
         var scene = proj.scenes[s];
@@ -175,6 +431,7 @@ function getAllCode(proj){
         code += indentString(scene.text.replaceAll("\r", ""), 4, { includeEmptyLines: true }) + "\n";
     }
 
+    // Write defintion groups
     for(var d in proj.definitionGroups){
         if(!proj.definitionGroups.hasOwnProperty(d)) continue;
         var group = proj.definitionGroups[d];
@@ -183,6 +440,7 @@ function getAllCode(proj){
         code += indentString(group.text.replaceAll("\r", ""), 4, { includeEmptyLines: true }) + "\n";
     }
 
+    // Write scripts at the end. No need for special indenting.
     proj.scripts.forEach(script => {
         code += script.text.replaceAll("\r", "") + "\n";
     });
@@ -191,7 +449,8 @@ function getAllCode(proj){
 }
 
 app.on('ready', () => {
-    mainWindow = new BrowserWindow({ show: false, title: 'Open Day Dialogue Editor', width: 800, height: 600 });
+    // Show the main widnow
+    mainWindow = new BrowserWindow({ show: false, title: 'Open Day Dialogue Editor', width: 1280, height: 720 });
     mainWindow.loadURL(url.format({
         pathname: path.join(getRootDir(), '/static/main.html'),
         protocol: 'file:',
@@ -200,6 +459,8 @@ app.on('ready', () => {
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
     });
+
+    // Register zooming in and out shortcuts
     globalShortcut.register('CommandOrControl+=', () => {
         if(!mainWindow.isFocused())
             return;
@@ -210,6 +471,8 @@ app.on('ready', () => {
             return;
         mainWindow.webContents.send('async-editor-zoom-out', {});
     });
+
+    // Confirm that the app should close
     mainWindow.on('close', e => {
         e.preventDefault();
         if (madeAnyChanges){
@@ -221,6 +484,8 @@ app.on('ready', () => {
             app.exit();
         }
     })
+
+    // Initialize the new project window
     newProjectWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'New Project', show: false, width: 600, height: 400, resizable: false });
     newProjectWindow.loadURL(url.format({
         pathname: path.join(getRootDir(), '/static/new_project.html'),
@@ -232,7 +497,11 @@ app.on('ready', () => {
         newProjectWindow.hide();
         newProjectWindow.reload();
     });
+
+    // Initialize the project info window
     projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
+    
+    // Setup the main application menu
     mainWindowMenu = Menu.buildFromTemplate([
         {
             label: 'File',
@@ -255,11 +524,24 @@ app.on('ready', () => {
                             var file = filenames[0];
                             fs.readFile(file, 'utf-8', (err, data) => {
                                 if (err) throw err;
+
+                                // Parse the JSON
+                                let proj = makeProjectFromJSON(data);
+
+                                // Verify that the project is valid
+                                if (!verifyProjectIntegrity(proj)){
+                                    dialog.showMessageBox(mainWindow, { title: 'Failed to open project', type: 'error', message: 'The project file you attempted to open is corrupt.' }, (number, checked) => {});
+                                    return;
+                                }
+
+                                // Update variables, set title, enable menus, etc.
                                 currentProjectFilename = file;
-                                currentProject = JSON.parse(data);
+                                currentProject = proj;
                                 mainWindow.setTitle(`Open Day Dialogue Editor - ${currentProject.name}`);
                                 enableProjectMenus();
-                                mainWindow.webContents.send('async-project-loaded', { currProject: currentProject });
+
+                                // Reload project
+                                mainWindow.webContents.send('async-project-loaded', { currProject: JSON.stringify(currentProject) });
                             });
                         });
                     }
@@ -276,23 +558,33 @@ app.on('ready', () => {
                     enabled: false,
                     accelerator: process.platform == 'darwin' ? 'Command+S' : 'Ctrl+S',
                     click(){
+                        // If the project has not been saved, open save dialog to choose the new file to create.
+                        // Otherwise, save the file.
                         if (!currentProjectFilename){
-                            // If the project has not been saved, open save dialog
                             dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Project', extensions: ['opdap'] } ], properties: ['openFile'] },
                             filename => {
                                 if (!filename)
                                     return;
+                                
+                                // Update the filename so the program saves to the correct file from now on
                                 currentProjectFilename = filename;
-                                fs.writeFile(filename, JSON.stringify(currentProject), err => {
+
+                                // Write the JSON to the file
+                                fs.writeFile(filename, getProjectJSON(), err => {
                                     if (err) throw err;
                                 });
+
+                                // No new unsaved changes
                                 madeAnyChanges = false;
                                 mainWindow.setTitle(`Open Day Dialogue Editor - ${currentProject.name}`);
                             });
                         } else {
-                            fs.writeFile(currentProjectFilename, JSON.stringify(currentProject), err => {
+                            // Write the JSON to the file
+                            fs.writeFile(currentProjectFilename, getProjectJSON(), err => {
                                 if (err) throw err;
                             });
+
+                            // No new unsaved changes
                             madeAnyChanges = false;
                             mainWindow.setTitle(`Open Day Dialogue Editor - ${currentProject.name}`);
                         }
@@ -302,17 +594,26 @@ app.on('ready', () => {
                     label: 'Save Project As',
                     enabled: false,
                     click(){
+                        // Open the save dialog
                         dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Project', extensions: ['opdap'] } ], properties: ['openFile'] },
                         filename => {
                             if (!filename)
                                 return;
+
+                            // Update the filename so the program saves to the correct file from now on
                             currentProjectFilename = filename;
-                            fs.writeFile(filename, JSON.stringify(currentProject), err => {
+
+                            // Write the JSON to the file
+                            fs.writeFile(filename, getProjectJSON(), err => {
                                 if (err) throw err;
                             });
+
+                            // No new unsaved changes
                             madeAnyChanges = false;
                             mainWindow.setTitle(`Open Day Dialogue Editor - ${currentProject.name}`);
-                            mainWindow.webContents.send('async-project-loaded', { currProject: currentProject });
+
+                            // Reload the project
+                            mainWindow.webContents.send('async-project-loaded', { currProject: JSON.stringify(currentProject) });
                         });
                     }
                 },
@@ -321,10 +622,13 @@ app.on('ready', () => {
                     accelerator: process.platform == 'darwin' ? 'Command+E' : 'Ctrl+E',
                     enabled: false,
                     click(){
+                        // Open save dialog for where the file should be output
                         dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Script', extensions: ['opda'] } ], properties: ['openFile'] },
                         filename => {
                             if (!filename)
                                 return;
+
+                            // Write the code to the file
                             fs.writeFile(filename, getAllCode(currentProject), err => {
                                 if (err) throw err;
                             });
@@ -341,6 +645,7 @@ app.on('ready', () => {
                     label: 'View Info',
                     enabled: false,
                     click(){
+                        // Show the window
                         projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
                         projectInfoWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/project_info.html'),
@@ -358,6 +663,7 @@ app.on('ready', () => {
                     accelerator: process.platform == 'darwin' ? 'Alt+S' : 'Alt+S',
                     enabled: false,
                     click(){
+                        // Show the window
                         newItemWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'New Scene', show: false, width: 600, height: 400, resizable: false });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_scene.html'),
@@ -375,6 +681,7 @@ app.on('ready', () => {
                     accelerator: process.platform == 'darwin' ? 'Alt+D' : 'Alt+D',
                     enabled: false,
                     click(){
+                        // Show the window
                         newItemWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'New Definition Group', show: false, width: 600, height: 400, resizable: false });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_defgroup.html'),
@@ -392,6 +699,7 @@ app.on('ready', () => {
                     accelerator: process.platform == 'darwin' ? 'Alt+F' : 'Alt+F',
                     enabled: false,
                     click(){
+                        // Show the window
                         newItemWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'New Script', show: false, width: 600, height: 400, resizable: false });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_script.html'),
