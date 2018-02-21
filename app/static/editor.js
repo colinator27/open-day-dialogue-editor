@@ -279,7 +279,6 @@ ipcRenderer.on('async-project-loaded', (ev, arg) => {
 ipcRenderer.on('async-update-tree', (ev, arg) => {
     hideEditor();
     lastUndoKey = undefined;
-    undoManagers = new Map();
     updateTree(JSON.parse(arg.currProject));
 })
 
