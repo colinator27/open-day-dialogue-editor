@@ -1,10 +1,21 @@
 const { ipcRenderer } = require('electron');
 
+// Easy way to store very simple data for an item
+class SimpleItemData { 
+    constructor(fullName, type){
+        this.fullName = fullName;
+        this.type = type;
+    }
+    get key(){
+        return Symbol.for(`pairKey[${this.fullName}:${this.type}]`);
+    }
+}
+
 // Start the editor, configure
 var editor = ace.edit("editor");
 editor.setTheme("ace/theme/opendaydialogue");
-editor.session.setMode("ace/mode/opendaydialogue");
-editor.session.setUseWrapMode(true);
+editor.getSession().setMode("ace/mode/opendaydialogue");
+editor.getSession().setUseWrapMode(true);
 editor.setFontSize(12);
 editor.setShowPrintMargin(false);
 
@@ -70,6 +81,7 @@ editor.selection.on("changeSelection", () => {
 });
 
 // When an item is clicked, update the code editor
+let lastUndoKey;
 function itemClick(targ){
     // Get the name and type
     let name = $(targ).children('p').get(0).innerText;
@@ -80,6 +92,12 @@ function itemClick(targ){
     if(type != "Scripts")
         namespace = $(targ).children('h3').get(0).innerText;
 
+    // Get the undo key
+    let undoKey = new SimpleItemData((namespace && namespace != "") ? (namespace + "." + name) : name, type).key;
+    if(undoKey == lastUndoKey)
+        return;
+    lastUndoKey = undoKey;
+
     // Set the namespace text if it applies
     if (namespace && namespace != "")
         document.querySelector(".editor-header-current-namespace").innerText = namespace + ".";
@@ -88,6 +106,9 @@ function itemClick(targ){
 
     // Set the name text
     document.querySelector(".editor-header-current-name").innerText = name;
+    
+    // Setting it to null seems to actually work, instead of creating a new one? Not sure.
+    editor.getSession().setUndoManager(null);
 
     // Update the text editor's code contents, reset cursor position
     editor.setValue(ipcRenderer.sendSync('sync-get-item-text', { name: name, namespace: namespace, type: type }), -1);
@@ -243,6 +264,7 @@ ipcRenderer.on('async-project-loaded', (ev, arg) => {
     // Update elements in the tree
     updateTree(JSON.parse(arg.currProject));
     hideEditor();
+    lastUndoKey = undefined;
 
     if(loaded)
         return;
@@ -256,6 +278,8 @@ ipcRenderer.on('async-project-loaded', (ev, arg) => {
 // Whenever the project's tree gets updated
 ipcRenderer.on('async-update-tree', (ev, arg) => {
     hideEditor();
+    lastUndoKey = undefined;
+    undoManagers = new Map();
     updateTree(JSON.parse(arg.currProject));
 })
 
@@ -263,6 +287,8 @@ ipcRenderer.on('async-update-tree', (ev, arg) => {
 ipcRenderer.on('async-item-deleted', (event, arg) => {
     if($(mostRecentContext).hasClass("ui-selected"))
         nodeUnselected();
+
+    // Remove element
     mostRecentContext.remove();
 });
 

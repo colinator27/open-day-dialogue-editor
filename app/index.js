@@ -24,7 +24,7 @@ function getRootDir(){
 // Verifies that the project is not corrupt
 function verifyProjectIntegrity(proj, special = false){
     // Check that the base fields exist
-    if (!proj.name || !proj.author || !proj.info || !proj.scenes || !proj.definitionGroups || !proj.scripts)
+    if (proj.name == undefined || proj.author == undefined || proj.info == undefined || !proj.scenes || !proj.definitionGroups || !proj.scripts)
         return false;
 
     if(!special){
@@ -114,6 +114,25 @@ function makeProjectFromJSON(json){
     return out;
 }
 
+// Checks if an item exists in the current project with a full name/key
+function doesItemExist(fullName){
+    for(var s in currentProject.scenes){
+        if(!currentProject.scenes.hasOwnProperty(s)) continue;
+        if(s == fullName)
+            return true;
+    }
+    for(var d in currentProject.definitionGroups){
+        if(!currentProject.definitionGroups.hasOwnProperty(d)) continue;
+        if(d == fullName)
+            return true;
+    }
+    return false;
+}
+
+function alertBoxItemExists(){
+    dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'An item with that name in that namespace already exists.' }, (number, checked) => {});
+}
+
 // Create a new project
 ipcMain.on('sync-new-project', (event, arg) => {
     // Initialize a blank project object
@@ -146,6 +165,11 @@ ipcMain.on('sync-new-project', (event, arg) => {
 
 // Create a new scene
 ipcMain.on('sync-new-scene', (event, arg) => {
+    if(doesItemExist(arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name)){
+        alertBoxItemExists();
+        event.returnValue = 1;
+        return;
+    }
     currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name] = { name: arg.name, namespace: arg.namespace, text: "// Enter your scene here" };
     mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
     event.returnValue = 0;
@@ -155,6 +179,11 @@ ipcMain.on('sync-new-scene', (event, arg) => {
 
 // Create a new definition group
 ipcMain.on('sync-new-defgroup', (event, arg) => {
+    if(doesItemExist(arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name)){
+        alertBoxItemExists();
+        event.returnValue = 1;
+        return;
+    }
     currentProject.definitionGroups[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name] = { name: arg.name, namespace: arg.namespace, text: "// Enter your definitions here" };
     mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
     event.returnValue = 0;

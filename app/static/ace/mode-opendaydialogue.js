@@ -34,7 +34,10 @@ define("ace/mode/opendaydialogue", ["require","exports","module","ace/lib/oop","
                 },
                 {
                     token: "command",
-                    regex: "^\\s*(?!" + keywords + ")[A-z_.](?:[\\w\\d\\s\"._])*" // Also matches definition keys, which is okay
+                    // This regex is quite long and possibly slow, but it gets the job done, considering
+                    // how it has to handle so many different possibilities for commands. No comments,
+                    // no keywords, and no definition statements.
+                    regex: "^\\s*(?!" + keywords + ")[A-z0-9_.]+(?:(?: +)|$)(?!=)(?:(?!\\/\\/).)*"
                 },
                 {
                     token: "operator",
