@@ -22,11 +22,11 @@ editor.setShowPrintMargin(false);
 // When text is updated by user, update the content in the project
 editor.on("change", function(e) {
     if(editor.curOp && editor.curOp.command.name) {
-        let name = $(mostRecentSelected).children('p').get(0).innerHTML;
-        let type = $(mostRecentSelected).parent('div').parent('ol').children('p').get(0).innerHTML;
+        let name = htmlUnescape($(mostRecentSelected).children('p').get(0).innerHTML);
+        let type = htmlUnescape($(mostRecentSelected).parent('div').parent('ol').children('p').get(0).innerHTML);
         let namespace;
         if(type != "Scripts")
-            namespace = $(mostRecentSelected).children('h3').get(0).innerHTML;
+            namespace = htmlUnescape($(mostRecentSelected).children('h3').get(0).innerHTML);
         ipcRenderer.sendSync('sync-update-item-text', { name: name, type: type, namespace: namespace, text: editor.getValue()});
         changesMade();
     }
@@ -69,7 +69,7 @@ function updateHeader(){
         selected = ` (${text.length} chars selected)`;
 
     // Update the element
-    document.querySelector(".editor-header-pos").innerHTML = `Line ${cursor.row + 1}, Col ${cursor.column + 1}${selected}`; 
+    document.querySelector(".editor-header-pos").innerHTML = htmlEscape(`Line ${cursor.row + 1}, Col ${cursor.column + 1}${selected}`); 
 }
 
 // On cursor movement and selection changes, update the header 
@@ -84,13 +84,13 @@ editor.selection.on("changeSelection", () => {
 let lastUndoKey;
 function itemClick(targ){
     // Get the name and type
-    let name = $(targ).children('p').get(0).innerText;
-    let type = $(targ).parent('div').parent('ol').children('p').get(0).innerText;
+    let name = htmlUnescape($(targ).children('p').get(0).innerHTML);
+    let type = htmlUnescape($(targ).parent('div').parent('ol').children('p').get(0).innerHTML);
 
     // Get the namespace, which doesn't apply to scripts
     let namespace;
     if(type != "Scripts")
-        namespace = $(targ).children('h3').get(0).innerText;
+        namespace = htmlUnescape($(targ).children('h3').get(0).innerHTML);
 
     // Get the undo key
     let undoKey = new SimpleItemData((namespace && namespace != "") ? (namespace + "." + name) : name, type).key;
@@ -103,12 +103,12 @@ function itemClick(targ){
 
     // Set the namespace text if it applies
     if (namespace && namespace != "")
-        document.querySelector(".editor-header-current-namespace").innerText = namespace + ".";
+        document.querySelector(".editor-header-current-namespace").innerHTML = htmlEscape(namespace + ".");
     else
-        document.querySelector(".editor-header-current-namespace").innerText = "";
+        document.querySelector(".editor-header-current-namespace").innerHTML = "";
 
     // Set the name text
-    document.querySelector(".editor-header-current-name").innerText = name;
+    document.querySelector(".editor-header-current-name").innerHTML = htmlEscape(name);
 
     // Update the text editor's code contents, reset cursor position
     editor.setValue(ipcRenderer.sendSync('sync-get-item-text', { name: name, namespace: namespace, type: type }), -1);
@@ -150,16 +150,16 @@ function jqCallbacks(){
             $("#list > ol > div").removeClass("sorting");
 
             // Update the tree's order in the project
-            let type = $(ev.target).parent('ol').children('p').get(0).innerText;
+            let type = htmlUnescape($(ev.target).parent('ol').children('p').get(0).innerHTML);
 
             // Put the order of elements into an array, by name
             let newOrder = [];
             $(ev.target).children('li').each((index, item) => {
                 if(type == "Scripts"){
-                    newOrder.push($(item).children('p').get(0).innerText);
+                    newOrder.push(htmlUnescape($(item).children('p').get(0).innerHTML));
                 } else {
-                    let namespace = $(item).children('h3').get(0).innerText;
-                    let name = $(item).children('p').get(0).innerText;
+                    let namespace = htmlUnescape($(item).children('h3').get(0).innerHTML);
+                    let name = htmlUnescape($(item).children('p').get(0).innerHTML);
                     let final = (namespace != "" ? (namespace + "." + name) : name);
                     newOrder.push(final);
                 }
@@ -199,13 +199,13 @@ function jqCallbacks(){
     // Allow the tree items to have context menus
     $('#list > ol > div > li').contextmenu((evt) => {
         // Get the name and type
-        let name = $(evt.currentTarget).children('p').get(0).innerText;
-        let type = $(evt.currentTarget).parent('div').parent('ol').children('p').get(0).innerText;
+        let name = htmlUnescape($(evt.currentTarget).children('p').get(0).innerHTML);
+        let type = htmlUnescape($(evt.currentTarget).parent('div').parent('ol').children('p').get(0).innerHTML);
 
         // If it's not a script, get the namespace
         let namespace;
         if(type != "Scripts")
-            namespace = $(evt.currentTarget).children('h3').get(0).innerText;
+            namespace = htmlUnescape($(evt.currentTarget).children('h3').get(0).innerHTML);
 
         // Set the target node for later use (if the item is deleted, edited, etc.)
         mostRecentContext = $(evt.currentTarget).get(0);
@@ -305,9 +305,9 @@ function updateTree(proj){
         let li = document.createElement("li");
         li.setAttribute('class', 'list-node');
         let p = document.createElement("p");
-        p.innerText = scene.name;
+        p.innerHTML = htmlEscape(scene.name);
         let h3 = document.createElement("h3");
-        h3.innerText = scene.namespace;
+        h3.innerHTML = htmlEscape(scene.namespace);
         li.appendChild(p);
         li.appendChild(h3);
         sceneGroup.appendChild(li);
@@ -323,9 +323,9 @@ function updateTree(proj){
         let li = document.createElement("li");
         li.setAttribute('class', 'list-node');
         let p = document.createElement("p");
-        p.innerText = group.name;
+        p.innerHTML = htmlEscape(group.name);
         let h3 = document.createElement("h3");
-        h3.innerText = group.namespace;
+        h3.innerHTML = htmlEscape(group.namespace);
         li.appendChild(p);
         li.appendChild(h3);
         defGroups.appendChild(li);
@@ -338,7 +338,7 @@ function updateTree(proj){
         let li = document.createElement("li");
         li.setAttribute('class', 'list-node');
         let p = document.createElement("p");
-        p.innerText = script.name;
+        p.innerHTML = htmlEscape(script.name);
         li.appendChild(p);
         scriptGroup.appendChild(li);
     });
@@ -350,4 +350,23 @@ function updateTree(proj){
 // When changes are made, notify the main program
 function changesMade(){
     ipcRenderer.sendSync("sync-changes-made", {});
+}
+
+// https://stackoverflow.com/questions/1219860/html-encoding-lost-when-attribute-read-from-input-field/7124052#7124052
+function htmlEscape(str) {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function htmlUnescape(str){
+    return str
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&');
 }
