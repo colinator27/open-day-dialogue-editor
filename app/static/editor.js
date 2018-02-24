@@ -94,9 +94,8 @@ function itemClick(targ){
 
     // Get the undo key
     let undoKey = new SimpleItemData((namespace && namespace != "") ? (namespace + "." + name) : name, type).key;
-    if(undoKey == lastUndoKey)
-        return;
-    lastUndoKey = undoKey;
+    if(undoKey != lastUndoKey)
+        lastUndoKey = undoKey;
 
     // Set the namespace text if it applies
     if (namespace && namespace != "")
