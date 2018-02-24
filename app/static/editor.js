@@ -94,8 +94,12 @@ function itemClick(targ){
 
     // Get the undo key
     let undoKey = new SimpleItemData((namespace && namespace != "") ? (namespace + "." + name) : name, type).key;
-    if(undoKey != lastUndoKey)
+    if(undoKey != lastUndoKey){
         lastUndoKey = undoKey;
+
+        // Setting it to null seems to actually work, instead of creating a new one? Not sure.
+        editor.getSession().setUndoManager(null);
+    }
 
     // Set the namespace text if it applies
     if (namespace && namespace != "")
@@ -105,9 +109,6 @@ function itemClick(targ){
 
     // Set the name text
     document.querySelector(".editor-header-current-name").innerText = name;
-    
-    // Setting it to null seems to actually work, instead of creating a new one? Not sure.
-    editor.getSession().setUndoManager(null);
 
     // Update the text editor's code contents, reset cursor position
     editor.setValue(ipcRenderer.sendSync('sync-get-item-text', { name: name, namespace: namespace, type: type }), -1);
