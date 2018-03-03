@@ -28,6 +28,9 @@ define("ace/theme/opendaydialogue",["require","exports","module","ace/lib/dom"],
     .ace-opendaydialogue .ace_variable {\
     color: rgb(49, 132, 149);\
     }\
+    .ace-opendaydialogue .ace_special {\
+    color: rgb(111, 111, 111);\
+    }\
     .ace-opendaydialogue .ace_command {\
     color: rgb(126, 0, 200);\
     }\
