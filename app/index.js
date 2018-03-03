@@ -748,6 +748,12 @@ app.on('ready', () => {
             label: 'Help',
             submenu: [
                 {
+                    label: 'About',
+                    click(){
+                        dialog.showMessageBox(mainWindow, { title: 'About', type: 'info', message: 'Open Day Dialogue - by colinator27 and contributors\n\nGitHub repository (editor): https://github.com/colinator27/open-day-dialogue-editor\nGitHub repository (compiler): https://github.com/colinator27/open-day-dialogue-compiler\nGitHub repository (interpreters): https://github.com/colinator27/open-day-dialogue-interpreters' }, (number, checked) => {});
+                    }
+                },
+                {
                     label: 'Open Developer Tools',
                     accelerator: process.platform == 'darwin' ? 'Command+Shift+I' : 'Ctrl+Shift+I',
                     click(){
