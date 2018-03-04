@@ -45,7 +45,7 @@ define("ace/mode/opendaydialogue", ["require","exports","module","ace/lib/oop","
                 },
                 {
                     token: "operator",
-                    regex: "\\+|\\-|\\*|\\/|%|<|>|<=|=>|==|!=|=|&&|\\|\\||\\^\\^"
+                    regex: "\\+|\\-|\\*|\\/|%|<|>|<=|=>|==|!=|=|&&|\\|\\||\\^\\^|!"
                 },
                 {
                     token: this.createKeywordMapper({
