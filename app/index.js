@@ -385,6 +385,10 @@ ipcMain.on('sync-changes-made', (event, arg) => {
 ipcMain.on('sync-bad-fields-0', (event, arg) => {
     if(newProjectWindow.isVisible()){
         dialog.showMessageBox(newProjectWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!\nName and author must be given.' }, (number, checked) => {});
+    } else if(editWindow.isVisible()){
+        dialog.showMessageBox(editWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {});
+    } else if(projectInfoWindow.isVisible()){
+        dialog.showMessageBox(projectInfoWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {});
     } else {
         dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {});
     }
