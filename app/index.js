@@ -320,7 +320,8 @@ ipcMain.on('async-list-node-context', (event, arg) => {
         {
             label: 'Delete',
             click(){
-                dialog.showMessageBox(mainWindow, { title: 'Delete item?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: `Are you sure you want to delete item "${arg.name}" permanently?` }, (number, checked) => {
+                let fullname = arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name;
+                dialog.showMessageBox(mainWindow, { title: 'Delete item?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: `Are you sure you want to delete item "${fullname}" permanently?` }, (number, checked) => {
                     if (number == 0){
                         if(arg.type == "Scenes"){
                             delete currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name];
