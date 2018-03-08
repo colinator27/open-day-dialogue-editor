@@ -1,30 +1,28 @@
-@font-face {
-	font-family: 'Dreamt';
-	src: url('Dreamt.eot'),
-		 url('Dreamt.woff') format('woff'),
-		 url('Dreamt.ttf') format('truetype');
-}
-
 html, body {
     max-width: 100%;
     overflow: hidden;
+    font-family: sans-serif;
 }
 
 h1 {
     font-size: 36px;
     font-style: bold;
-    font-family: 'Dreamt';
+    font-family: sans-serif;
     color: #000;
     user-select: none !important;
     -webkit-user-select: none !important;
 }
 
 p {
-    font-size: 24px;
-    font-family: 'Dreamt';
+    font-size: 18px;
+    font-family: sans-serif;
     color: #000;
     user-select: none !important;
     -webkit-user-select: none !important;
+}
+
+#no-project p {
+    padding-left: 10px;
 }
 
 body {
@@ -39,7 +37,7 @@ code {
     padding-right: 4px;
     padding-top: 4px;
     padding-bottom: 4px;
-    font-family: 'Dreamt';
+    font-family: sans-serif;
     color: #000;
 }
 
@@ -59,7 +57,7 @@ input[type=text] {
     padding-bottom: 8px;
     box-sizing: border-box;
     font-size: 18px;
-    font-family: 'Dreamt';
+    font-family: sans-serif;
     color: #000;
 }
 
@@ -72,7 +70,7 @@ textarea {
     box-sizing: border-box;
     resize: none;
     font-size: 18px;
-    font-family: 'Dreamt';
+    font-family: sans-serif;
     color: #000;
     margin-bottom: 0px;
     outline: none;
@@ -80,6 +78,13 @@ textarea {
     -webkit-box-shadow: none;
     -moz-box-shadow: none;
     box-shadow: none;
+}
+
+#info {
+    display: inline-block;
+    vertical-align: bottom;
+    bottom: 0;
+    width: 80%;
 }
 
 button {
@@ -90,7 +95,7 @@ button {
     padding-top: 4px;
     padding-bottom: 4px;
     font-size: 18px;
-    font-family: 'Dreamt';
+    font-family: sans-serif;
     color: #000;
     background-color: #fff;
     border-width: 1px;
@@ -123,6 +128,7 @@ button:active {
     position: relative;
     bottom: 16px;
     right: 8px;
+    padding-top: 8px;
 }
 
 input {
@@ -140,7 +146,7 @@ input {
 }
 
 .editor-header {
-    width: 72.4%;
+    width: 72%;
     float: right;
     height: 6%;
     background-color: #ebebeb;
@@ -165,10 +171,11 @@ input {
     padding: 0;
     margin: 0;
     font-size: 18px;
-    width: 72.4%;
+    width: 72%;
     height: 94%;
     float: right;
     position: absolute;
+    margin-right: -1px;
 }
 
 .list {
@@ -197,21 +204,25 @@ input {
     border-bottom-color: #444;
     background-color: #eee;
     font-family: "Consolas", monospace;
+    border-radius: 8px;
+    -webkit-transition: background-color 0.25s;
+    -moz-transition: background-color 0.25s;
+    -ms-transition: background-color 0.25s;
+    -o-transition: background-color 0.25s;
+    transition: background-color 0.25s;
+    margin-top: 2px;
 }
 
 .list-node:hover {
     background-color: rgb(187, 206, 255);
-    border-radius: 2px;
 }
 
 .ui_selecting {
     background-color: rgb(60, 112, 255) !important;
-    border-radius: 2px;
 }
 
 .ui-selected {
     background-color: rgb(131, 164, 255) !important;
-    border-radius: 2px;
 }
 
 .list-node > p {
@@ -230,7 +241,7 @@ input {
     margin-top: -2px;
     color: #888;
     font-weight: normal;
-    font-family: 'Dreamt';
+    font-family: sans-serif;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
@@ -245,7 +256,7 @@ input {
 
 .list-group > p {
     color: #555;
-    font-family: 'Dreamt';
+    font-family: sans-serif;
     margin-left: -20px;
     margin-bottom: 8px;
     user-select: none !important;
@@ -296,6 +307,7 @@ a {
 
 .sorting {
     background-color: #aaa;
+    border-radius: 8px;
 }
 
 .smallermargin {
