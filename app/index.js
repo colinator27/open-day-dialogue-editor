@@ -10,6 +10,17 @@ let newProjectWindow, newItemWindow, projectInfoWindow, editWindow;
 let currentProjectFilename = undefined;
 let currentProject = undefined;
 let madeAnyChanges = false;
+let useModal = (process.platform != 'darwin');
+
+BrowserWindow.prototype.setClickInteraction = function(ignore){
+    if(!useModal){
+        this.setIgnoreMouseEvents(ignore);
+    }
+}
+
+function getWindowModal(window){
+    return useModal ? window : undefined;
+}
 
 function changesMade(){
     madeAnyChanges = true;
@@ -130,7 +141,7 @@ function doesItemExist(fullName){
 }
 
 function alertBoxItemExists(){
-    dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'An item with that name in that namespace already exists.' }, (number, checked) => {});
+    dialog.showMessageBox(getWindowModal(newItemWindow), { title: 'Improper fields', type: 'error', message: 'An item with that name in that namespace already exists.' }, (number, checked) => {});
 }
 
 // Create a new project
@@ -303,7 +314,7 @@ ipcMain.on('async-list-node-context', (event, arg) => {
             label: 'Edit',
             click(){
                 editLastNode = arg;
-                editWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'Edit item', show: false, width: 600, height: 200, resizable: false });
+                editWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'Edit item', show: false, width: 600, height: 200, resizable: false });
                 editWindow.loadURL(url.format({
                     pathname: path.join(getRootDir(), '/static/edit.html'),
                     protocol: 'file:',
@@ -321,9 +332,9 @@ ipcMain.on('async-list-node-context', (event, arg) => {
             label: 'Delete',
             click(){
                 let fullname = arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name;
-                mainWindow.setIgnoreMouseEvents(true);
-                dialog.showMessageBox(mainWindow, { title: 'Delete item?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: `Are you sure you want to delete item "${fullname}" permanently?` }, (number, checked) => {
-                    mainWindow.setIgnoreMouseEvents(false);
+                mainWindow.setClickInteraction(true);
+                dialog.showMessageBox(getWindowModal(mainWindow), { title: 'Delete item?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: `Are you sure you want to delete item "${fullname}" permanently?` }, (number, checked) => {
+                    mainWindow.setClickInteraction(false);
                     if (number == 0){
                         if(arg.type == "Scenes"){
                             delete currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name];
@@ -387,24 +398,24 @@ ipcMain.on('sync-changes-made', (event, arg) => {
 // Displays an error about blank fields
 ipcMain.on('sync-bad-fields-0', (event, arg) => {
     if(newProjectWindow != undefined && newProjectWindow.isVisible()){
-        newProjectWindow.setIgnoreMouseEvents(true);
-        dialog.showMessageBox(newProjectWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!\nName and author must be given.' }, (number, checked) => {
-            newProjectWindow.setIgnoreMouseEvents(false);
+        newProjectWindow.setClickInteraction(true);
+        dialog.showMessageBox(getWindowModal(newProjectWindow), { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!\nName and author must be given.' }, (number, checked) => {
+            newProjectWindow.setClickInteraction(false);
         });
     } else if(editWindow != undefined && editWindow.isVisible()){
-        editWindow.setIgnoreMouseEvents(true);
-        dialog.showMessageBox(editWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
-            editWindow.setIgnoreMouseEvents(false);
+        editWindow.setClickInteraction(true);
+        dialog.showMessageBox(getWindowModal(editWindow), { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+            editWindow.setClickInteraction(false);
         });
     } else if(projectInfoWindow != undefined && projectInfoWindow.isVisible()){
-        projectInfoWindow.setIgnoreMouseEvents(true);
-        dialog.showMessageBox(projectInfoWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
-            projectInfoWindow.setIgnoreMouseEvents(false);
+        projectInfoWindow.setClickInteraction(true);
+        dialog.showMessageBox(getWindowModal(projectInfoWindow), { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+            projectInfoWindow.setClickInteraction(false);
         });
     } else {
-        newItemWindow.setIgnoreMouseEvents(true);
-        dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
-            newItemWindow.setIgnoreMouseEvents(false);
+        newItemWindow.setClickInteraction(true);
+        dialog.showMessageBox(getWindowModal(newItemWindow), { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+            newItemWindow.setClickInteraction(false);
         });
     }
     event.returnValue = 0;
@@ -412,9 +423,9 @@ ipcMain.on('sync-bad-fields-0', (event, arg) => {
 
 // Displays an error of invalid characters used in a name/identifier
 ipcMain.on('sync-bad-fields-1', (event, arg) => {
-    mainWindow.setIgnoreMouseEvents(true);
-    dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {
-        mainWindow.setIgnoreMouseEvents(false);
+    mainWindow.setClickInteraction(true);
+    dialog.showMessageBox(getWindowModal(newItemWindow), { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {
+        mainWindow.setClickInteraction(false);
     });
     event.returnValue = 0;
 });
@@ -532,9 +543,9 @@ app.on('ready', () => {
     mainWindow.on('close', e => {
         e.preventDefault();
         if (madeAnyChanges){
-            mainWindow.setIgnoreMouseEvents(true);
-            dialog.showMessageBox(mainWindow, { title: 'Quit?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: 'Quit and lose unsaved changes?' }, (number, checked) => {
-                mainWindow.setIgnoreMouseEvents(false);
+            mainWindow.setClickInteraction(true);
+            dialog.showMessageBox(getWindowModal(mainWindow), { title: 'Quit?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: 'Quit and lose unsaved changes?' }, (number, checked) => {
+                mainWindow.setClickInteraction(false);
                 if (number == 0)
                     app.exit();
             });
@@ -544,7 +555,7 @@ app.on('ready', () => {
     })
 
     // Initialize the new project window
-    newProjectWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'New Project', show: false, width: 600, height: 400, resizable: false });
+    newProjectWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'New Project', show: false, width: 600, height: 400, resizable: false });
     newProjectWindow.loadURL(url.format({
         pathname: path.join(getRootDir(), '/static/new_project.html'),
         protocol: 'file:',
@@ -554,11 +565,11 @@ app.on('ready', () => {
         e.preventDefault();
         newProjectWindow.hide();
         newProjectWindow.reload();
-        mainWindow.setIgnoreMouseEvents(false);
+        mainWindow.setClickInteraction(false);
     });
 
     // Initialize the project info window
-    projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
+    projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
     
     // Setup the main application menu
     mainWindowMenu = Menu.buildFromTemplate([
@@ -570,17 +581,17 @@ app.on('ready', () => {
                     click(){
                         newProjectWindow.setMenu(null);
                         newProjectWindow.show();
-                        mainWindow.setIgnoreMouseEvents(true);
+                        mainWindow.setClickInteraction(true);
                     }
                 },
                 {
                     label: 'Open Project',
                     accelerator: process.platform == 'darwin' ? 'Command+O' : 'Ctrl+O',
                     click(){
-                        mainWindow.setIgnoreMouseEvents(true);
+                        mainWindow.setClickInteraction(true);
                         dialog.showOpenDialog({ filters: [ { name: 'Open Day Dialogue Project', extensions: ['opdap'] } ], properties: ['openFile'] },
                         filenames => {
-                            mainWindow.setIgnoreMouseEvents(false);
+                            mainWindow.setClickInteraction(false);
                             if (!filenames)
                                 return;
                             var file = filenames[0];
@@ -592,7 +603,7 @@ app.on('ready', () => {
 
                                 // Verify that the project is valid
                                 if (!verifyProjectIntegrity(proj)){
-                                    dialog.showMessageBox(mainWindow, { title: 'Failed to open project', type: 'error', message: 'The project file you attempted to open is corrupt.' }, (number, checked) => {});
+                                    dialog.showMessageBox(getWindowModal(mainWindow), { title: 'Failed to open project', type: 'error', message: 'The project file you attempted to open is corrupt.' }, (number, checked) => {});
                                     return;
                                 }
 
@@ -623,10 +634,10 @@ app.on('ready', () => {
                         // If the project has not been saved, open save dialog to choose the new file to create.
                         // Otherwise, save the file.
                         if (!currentProjectFilename){
-                            mainWindow.setIgnoreMouseEvents(true);
+                            mainWindow.setClickInteraction(true);
                             dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Project', extensions: ['opdap'] } ], properties: ['openFile'] },
                             filename => {
-                                mainWindow.setIgnoreMouseEvents(false);
+                                mainWindow.setClickInteraction(false);
 
                                 if (!filename)
                                     return;
@@ -660,10 +671,10 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Open the save dialog
-                        mainWindow.setIgnoreMouseEvents(true);
+                        mainWindow.setClickInteraction(true);
                         dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Project', extensions: ['opdap'] } ], properties: ['openFile'] },
                         filename => {
-                            mainWindow.setIgnoreMouseEvents(false);
+                            mainWindow.setClickInteraction(false);
 
                             if (!filename)
                                 return;
@@ -691,10 +702,10 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Open save dialog for where the file should be output
-                        mainWindow.setIgnoreMouseEvents(true);
+                        mainWindow.setClickInteraction(true);
                         dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Script', extensions: ['opda'] } ], properties: ['openFile'] },
                         filename => {
-                            mainWindow.setIgnoreMouseEvents(false);
+                            mainWindow.setClickInteraction(false);
 
                             if (!filename)
                                 return;
@@ -704,9 +715,9 @@ app.on('ready', () => {
                                 if (err) throw err;
                             });
 
-                            mainWindow.setIgnoreMouseEvents(true);
-                            dialog.showMessageBox(mainWindow, { title: 'Completed', type: 'info', message: 'Exported code successfully.' }, (number, checked) => {
-                                mainWindow.setIgnoreMouseEvents(false);
+                            mainWindow.setClickInteraction(true);
+                            dialog.showMessageBox(getWindowModal(mainWindow), { title: 'Completed', type: 'info', message: 'Exported code successfully.' }, (number, checked) => {
+                                mainWindow.setClickInteraction(false);
                             });
                         });
                     }
@@ -722,7 +733,7 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Show the window
-                        projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
+                        projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
                         projectInfoWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/project_info.html'),
                             protocol: 'file:',
@@ -731,9 +742,9 @@ app.on('ready', () => {
                         projectInfoWindow.setMenu(null);
                         projectInfoWindow.once('ready-to-show', () => {
                             projectInfoWindow.show();
-                            mainWindow.setIgnoreMouseEvents(true);
+                            mainWindow.setClickInteraction(true);
                             projectInfoWindow.on('close', e => {
-                                mainWindow.setIgnoreMouseEvents(false);
+                                mainWindow.setClickInteraction(false);
                             });
                         });
                     }
@@ -744,7 +755,7 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Show the window
-                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'New Scene', show: false, width: 600, height: 400, resizable: false });
+                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'New Scene', show: false, width: 600, height: 400, resizable: false });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_scene.html'),
                             protocol: 'file:',
@@ -753,9 +764,9 @@ app.on('ready', () => {
                         newItemWindow.setMenu(null);
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
-                            mainWindow.setIgnoreMouseEvents(true);
+                            mainWindow.setClickInteraction(true);
                             newItemWindow.on('close', e => {
-                                mainWindow.setIgnoreMouseEvents(false);
+                                mainWindow.setClickInteraction(false);
                             });
                         });
                     }
@@ -766,7 +777,7 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Show the window
-                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'New Definition Group', show: false, width: 600, height: 400, resizable: false });
+                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'New Definition Group', show: false, width: 600, height: 400, resizable: false });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_defgroup.html'),
                             protocol: 'file:',
@@ -775,9 +786,9 @@ app.on('ready', () => {
                         newItemWindow.setMenu(null);
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
-                            mainWindow.setIgnoreMouseEvents(true);
+                            mainWindow.setClickInteraction(true);
                             newItemWindow.on('close', e => {
-                                mainWindow.setIgnoreMouseEvents(false);
+                                mainWindow.setClickInteraction(false);
                             });
                         });
                     }
@@ -788,7 +799,7 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Show the window
-                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: true, title: 'New Script', show: false, width: 600, height: 400, resizable: false });
+                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'New Script', show: false, width: 600, height: 400, resizable: false });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_script.html'),
                             protocol: 'file:',
@@ -797,9 +808,9 @@ app.on('ready', () => {
                         newItemWindow.setMenu(null);
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
-                            mainWindow.setIgnoreMouseEvents(true);
+                            mainWindow.setClickInteraction(true);
                             newItemWindow.on('close', e => {
-                                mainWindow.setIgnoreMouseEvents(false);
+                                mainWindow.setClickInteraction(false);
                             });
                         });
                     }
@@ -812,9 +823,9 @@ app.on('ready', () => {
                 {
                     label: 'About',
                     click(){
-                        mainWindow.setIgnoreMouseEvents(true);
-                        dialog.showMessageBox(mainWindow, { title: 'About', type: 'info', message: 'Open Day Dialogue - by colinator27 and contributors\n\nGitHub repository (editor): https://github.com/colinator27/open-day-dialogue-editor\nGitHub repository (compiler): https://github.com/colinator27/open-day-dialogue-compiler\nGitHub repository (interpreters): https://github.com/colinator27/open-day-dialogue-interpreters' }, (number, checked) => {
-                            mainWindow.setIgnoreMouseEvents(false);
+                        mainWindow.setClickInteraction(true);
+                        dialog.showMessageBox(getWindowModal(mainWindow), { title: 'About', type: 'info', message: 'Open Day Dialogue - by colinator27 and contributors\n\nGitHub repository (editor): https://github.com/colinator27/open-day-dialogue-editor\nGitHub repository (compiler): https://github.com/colinator27/open-day-dialogue-compiler\nGitHub repository (interpreters): https://github.com/colinator27/open-day-dialogue-interpreters' }, (number, checked) => {
+                            mainWindow.setClickInteraction(false);
                         });
                     }
                 },
