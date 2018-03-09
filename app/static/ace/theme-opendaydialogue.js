@@ -22,6 +22,9 @@ define("ace/theme/opendaydialogue",["require","exports","module","ace/lib/dom"],
     .ace-opendaydialogue .ace_comment {\
     color: #236e24;\
     }\
+    .ace-opendaydialogue .ace_constant {\
+    color: rgb(0, 0, 205);\
+    }\
     .ace-opendaydialogue .ace_number {\
     color: rgb(0, 0, 205);\
     }\

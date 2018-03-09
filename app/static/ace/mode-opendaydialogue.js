@@ -48,10 +48,15 @@ define("ace/mode/opendaydialogue", ["require","exports","module","ace/lib/oop","
                     regex: "\\+|\\-|\\*|\\/|%|<|>|<=|=>|==|!=|=|&&|\\|\\||\\^\\^|!"
                 },
                 {
-                    token: this.createKeywordMapper({
-                                "constant.language": builtinConstants,
-                                "keyword": keywords
-                            }, "identifier"),
+                    token: "keyword",
+                    regex: "(?:[^@]|^)(?:" + keywords + ")\\b"
+                },
+                {
+                    token: "constant",
+                    regex: "(?:[^@]|^)(?:" + builtinConstants + ")\\b"
+                },
+                {
+                    token: "identifier",
                     regex: "[A-z_.][A-z0-9_.]*\\b"
                 },
                 {
