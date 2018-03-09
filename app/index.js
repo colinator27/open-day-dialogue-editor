@@ -185,6 +185,7 @@ ipcMain.on('sync-new-scene', (event, arg) => {
     mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
     event.returnValue = 0;
     changesMade();
+    mainWindow.setClickInteraction(false);
     newItemWindow.close();
 });
 
@@ -197,18 +198,20 @@ ipcMain.on('sync-new-defgroup', (event, arg) => {
     }
     currentProject.definitionGroups[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name] = { name: arg.name, namespace: arg.namespace, text: "// Enter your definitions here" };
     mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
-    event.returnValue = 0;
     changesMade();
+    mainWindow.setClickInteraction(false);
     newItemWindow.close();
+    event.returnValue = 0;
 });
 
 // Create a new script
 ipcMain.on('sync-new-script', (event, arg) => {
     currentProject.scripts.push({ name: arg.name, text: "// Enter your script here" });
     mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
-    event.returnValue = 0;
     changesMade();
+    mainWindow.setClickInteraction(false);
     newItemWindow.close();
+    event.returnValue = 0;
 });
 
 // When updating the project info
@@ -217,6 +220,7 @@ ipcMain.on('sync-update-project-info', (event, arg) => {
     currentProject.author = arg.author;
     currentProject.info = arg.info;
     changesMade();
+    mainWindow.setClickInteraction(false);
     projectInfoWindow.close();
     event.returnValue = 0;
 });
@@ -743,9 +747,6 @@ app.on('ready', () => {
                         projectInfoWindow.once('ready-to-show', () => {
                             projectInfoWindow.show();
                             mainWindow.setClickInteraction(true);
-                            projectInfoWindow.on('close', e => {
-                                mainWindow.setClickInteraction(false);
-                            });
                         });
                     }
                 },
@@ -765,9 +766,6 @@ app.on('ready', () => {
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
                             mainWindow.setClickInteraction(true);
-                            newItemWindow.on('close', e => {
-                                mainWindow.setClickInteraction(false);
-                            });
                         });
                     }
                 },
@@ -787,9 +785,6 @@ app.on('ready', () => {
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
                             mainWindow.setClickInteraction(true);
-                            newItemWindow.on('close', e => {
-                                mainWindow.setClickInteraction(false);
-                            });
                         });
                     }
                 },
@@ -809,9 +804,6 @@ app.on('ready', () => {
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
                             mainWindow.setClickInteraction(true);
-                            newItemWindow.on('close', e => {
-                                mainWindow.setClickInteraction(false);
-                            });
                         });
                     }
                 }
