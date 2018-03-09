@@ -370,3 +370,13 @@ function htmlUnescape(str){
         .replace(/&gt;/g, '>')
         .replace(/&amp;/g, '&');
 }
+
+// https://github.com/electron/electron/issues/908
+document.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+});
+document.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+});

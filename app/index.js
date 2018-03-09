@@ -321,7 +321,9 @@ ipcMain.on('async-list-node-context', (event, arg) => {
             label: 'Delete',
             click(){
                 let fullname = arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name;
+                mainWindow.setIgnoreMouseEvents(true);
                 dialog.showMessageBox(mainWindow, { title: 'Delete item?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: `Are you sure you want to delete item "${fullname}" permanently?` }, (number, checked) => {
+                    mainWindow.setIgnoreMouseEvents(false);
                     if (number == 0){
                         if(arg.type == "Scenes"){
                             delete currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name];
@@ -384,21 +386,36 @@ ipcMain.on('sync-changes-made', (event, arg) => {
 
 // Displays an error about blank fields
 ipcMain.on('sync-bad-fields-0', (event, arg) => {
-    if(newProjectWindow.isVisible()){
-        dialog.showMessageBox(newProjectWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!\nName and author must be given.' }, (number, checked) => {});
-    } else if(editWindow.isVisible()){
-        dialog.showMessageBox(editWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {});
-    } else if(projectInfoWindow.isVisible()){
-        dialog.showMessageBox(projectInfoWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {});
+    if(newProjectWindow != undefined && newProjectWindow.isVisible()){
+        newProjectWindow.setIgnoreMouseEvents(true);
+        dialog.showMessageBox(newProjectWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!\nName and author must be given.' }, (number, checked) => {
+            newProjectWindow.setIgnoreMouseEvents(false);
+        });
+    } else if(editWindow != undefined && editWindow.isVisible()){
+        editWindow.setIgnoreMouseEvents(true);
+        dialog.showMessageBox(editWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+            editWindow.setIgnoreMouseEvents(false);
+        });
+    } else if(projectInfoWindow != undefined && projectInfoWindow.isVisible()){
+        projectInfoWindow.setIgnoreMouseEvents(true);
+        dialog.showMessageBox(projectInfoWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+            projectInfoWindow.setIgnoreMouseEvents(false);
+        });
     } else {
-        dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {});
+        newItemWindow.setIgnoreMouseEvents(true);
+        dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+            newItemWindow.setIgnoreMouseEvents(false);
+        });
     }
     event.returnValue = 0;
 });
 
 // Displays an error of invalid characters used in a name/identifier
 ipcMain.on('sync-bad-fields-1', (event, arg) => {
-    dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {});
+    mainWindow.setIgnoreMouseEvents(true);
+    dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {
+        mainWindow.setIgnoreMouseEvents(false);
+    });
     event.returnValue = 0;
 });
 
@@ -515,7 +532,9 @@ app.on('ready', () => {
     mainWindow.on('close', e => {
         e.preventDefault();
         if (madeAnyChanges){
+            mainWindow.setIgnoreMouseEvents(true);
             dialog.showMessageBox(mainWindow, { title: 'Quit?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: 'Quit and lose unsaved changes?' }, (number, checked) => {
+                mainWindow.setIgnoreMouseEvents(false);
                 if (number == 0)
                     app.exit();
             });
@@ -535,6 +554,7 @@ app.on('ready', () => {
         e.preventDefault();
         newProjectWindow.hide();
         newProjectWindow.reload();
+        mainWindow.setIgnoreMouseEvents(false);
     });
 
     // Initialize the project info window
@@ -550,14 +570,17 @@ app.on('ready', () => {
                     click(){
                         newProjectWindow.setMenu(null);
                         newProjectWindow.show();
+                        mainWindow.setIgnoreMouseEvents(true);
                     }
                 },
                 {
                     label: 'Open Project',
                     accelerator: process.platform == 'darwin' ? 'Command+O' : 'Ctrl+O',
                     click(){
+                        mainWindow.setIgnoreMouseEvents(true);
                         dialog.showOpenDialog({ filters: [ { name: 'Open Day Dialogue Project', extensions: ['opdap'] } ], properties: ['openFile'] },
                         filenames => {
+                            mainWindow.setIgnoreMouseEvents(false);
                             if (!filenames)
                                 return;
                             var file = filenames[0];
@@ -600,8 +623,11 @@ app.on('ready', () => {
                         // If the project has not been saved, open save dialog to choose the new file to create.
                         // Otherwise, save the file.
                         if (!currentProjectFilename){
+                            mainWindow.setIgnoreMouseEvents(true);
                             dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Project', extensions: ['opdap'] } ], properties: ['openFile'] },
                             filename => {
+                                mainWindow.setIgnoreMouseEvents(false);
+
                                 if (!filename)
                                     return;
                                 
@@ -634,8 +660,11 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Open the save dialog
+                        mainWindow.setIgnoreMouseEvents(true);
                         dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Project', extensions: ['opdap'] } ], properties: ['openFile'] },
                         filename => {
+                            mainWindow.setIgnoreMouseEvents(false);
+
                             if (!filename)
                                 return;
 
@@ -662,14 +691,22 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Open save dialog for where the file should be output
+                        mainWindow.setIgnoreMouseEvents(true);
                         dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Script', extensions: ['opda'] } ], properties: ['openFile'] },
                         filename => {
+                            mainWindow.setIgnoreMouseEvents(false);
+
                             if (!filename)
                                 return;
 
                             // Write the code to the file
                             fs.writeFile(filename, getAllCode(currentProject), err => {
                                 if (err) throw err;
+                            });
+
+                            mainWindow.setIgnoreMouseEvents(true);
+                            dialog.showMessageBox(mainWindow, { title: 'Completed', type: 'info', message: 'Exported code successfully.' }, (number, checked) => {
+                                mainWindow.setIgnoreMouseEvents(false);
                             });
                         });
                     }
@@ -694,6 +731,10 @@ app.on('ready', () => {
                         projectInfoWindow.setMenu(null);
                         projectInfoWindow.once('ready-to-show', () => {
                             projectInfoWindow.show();
+                            mainWindow.setIgnoreMouseEvents(true);
+                            projectInfoWindow.on('close', e => {
+                                mainWindow.setIgnoreMouseEvents(false);
+                            });
                         });
                     }
                 },
@@ -712,6 +753,10 @@ app.on('ready', () => {
                         newItemWindow.setMenu(null);
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
+                            mainWindow.setIgnoreMouseEvents(true);
+                            newItemWindow.on('close', e => {
+                                mainWindow.setIgnoreMouseEvents(false);
+                            });
                         });
                     }
                 },
@@ -730,6 +775,10 @@ app.on('ready', () => {
                         newItemWindow.setMenu(null);
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
+                            mainWindow.setIgnoreMouseEvents(true);
+                            newItemWindow.on('close', e => {
+                                mainWindow.setIgnoreMouseEvents(false);
+                            });
                         });
                     }
                 },
@@ -748,6 +797,10 @@ app.on('ready', () => {
                         newItemWindow.setMenu(null);
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
+                            mainWindow.setIgnoreMouseEvents(true);
+                            newItemWindow.on('close', e => {
+                                mainWindow.setIgnoreMouseEvents(false);
+                            });
                         });
                     }
                 }
@@ -759,7 +812,10 @@ app.on('ready', () => {
                 {
                     label: 'About',
                     click(){
-                        dialog.showMessageBox(mainWindow, { title: 'About', type: 'info', message: 'Open Day Dialogue - by colinator27 and contributors\n\nGitHub repository (editor): https://github.com/colinator27/open-day-dialogue-editor\nGitHub repository (compiler): https://github.com/colinator27/open-day-dialogue-compiler\nGitHub repository (interpreters): https://github.com/colinator27/open-day-dialogue-interpreters' }, (number, checked) => {});
+                        mainWindow.setIgnoreMouseEvents(true);
+                        dialog.showMessageBox(mainWindow, { title: 'About', type: 'info', message: 'Open Day Dialogue - by colinator27 and contributors\n\nGitHub repository (editor): https://github.com/colinator27/open-day-dialogue-editor\nGitHub repository (compiler): https://github.com/colinator27/open-day-dialogue-compiler\nGitHub repository (interpreters): https://github.com/colinator27/open-day-dialogue-interpreters' }, (number, checked) => {
+                            mainWindow.setIgnoreMouseEvents(false);
+                        });
                     }
                 },
                 {

@@ -66,7 +66,7 @@ define("ace/theme/opendaydialogue",["require","exports","module","ace/lib/dom"],
     background: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==\") right repeat-y;\
     }\
     .ace_editor, .ace_editor div {\
-        font-family: \"Consolas\", monospace\
+        font-family: \"Lucida Console\", Monaco, monospace;\
     }";
     
     var dom = require("../lib/dom");

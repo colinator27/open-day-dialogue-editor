@@ -48,6 +48,16 @@
             document.querySelector("#name").oninput = update;
             document.querySelector("#author").oninput = update;
             document.querySelector("#info").oninput = update;
+            
+            // https://github.com/electron/electron/issues/908
+            document.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            document.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
         </script>
     </body>
 </html>
