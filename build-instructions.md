@@ -14,8 +14,8 @@ Also, as you should expect, it is recommended you have at *least* 1 GB of storag
 2. Build using electron-packager.
     * For Windows, 32-bit and 64-bit, where `[version]` is the app version (ex. `0.9.2`).
         * `electron-packager . "Open Day Dialogue Editor" --app-copyright="colinator27 and contributors" --app-version=[version] --arch=ia32,x64 --asar --icon="./icons/app.ico" --out="./builds/" --overwrite --platform=win32`
-    * For Mac, 32-bit and 64-bit, where `[version]` is the app version (ex. `0.9.2`).
-	    * `electron-packager . "Open Day Dialogue Editor" --app-copyright="colinator27 and contributors" --app-version=[version] --arch=ia32,x64 --asar --icon="./icons/app.icns" --out="./builds/" --overwrite --platform=darwin`
+    * For Mac, 64-bit, where `[version]` is the app version (ex. `0.9.2`).
+	    * `electron-packager . "Open Day Dialogue Editor" --app-copyright="colinator27 and contributors" --app-version=[version] --arch=x64 --asar --icon="./icons/app.icns" --out="./builds/" --overwrite --platform=darwin`
 
 ### Note
 The compiled binaries you create should *not* be distributed unless given explicit permission. However, you can do as much as you want with it as long as it is only for personal use.

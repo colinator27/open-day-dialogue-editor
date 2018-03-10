@@ -43,6 +43,10 @@
                 if (hasNamespace){
                     namespace = document.querySelector("#namespace").value;
                 }
+                if (hasNamespace && (!isStringValid(name) || !isStringValid(namespace))){
+                    ipcRenderer.sendSync('sync-bad-fields-1', {});
+                    return;
+                }
                 ipcRenderer.sendSync('sync-item-edit', { name: name, namespace: namespace });
             });
             
