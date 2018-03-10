@@ -557,11 +557,12 @@ app.on('ready', () => {
         protocol: 'file:',
         slashes: true
     }));
-    newProjectWindow.on('close', e => {
+    newProjectWindow.on('closed', e => {
         e.preventDefault();
         newProjectWindow.hide();
         newProjectWindow.reload();
         mainWindow.setClickInteraction(false);
+        console.log("Restoring focus to main window.");
     });
 
     // Initialize the project info window
