@@ -9,3 +9,13 @@ Open Day Dialogue is a dialogue system for games, inspired by others such as [Ya
 Open Day Dialogue is designed so that it should run with most game engines- as long as an interpreter is written for it. The system is split into three parts: the editor (this repository), the compiler, and the engine-specific interpreters.
 
 For more information, head to the [wiki](https://github.com/colinator27/open-day-dialogue-editor/wiki).
+
+### How to run, without building
+First, you must install all of the dependencies. This is a one-time job, and is one simple command:
+`npm install`
+
+After that, you only need to run the following command to launch:
+`npm start`
+
+### Build instructions
+If you're interested in building, head [here](https://github.com/colinator27/open-day-dialogue-editor/build-instructions.md) (or just look at `build-instructions.md`).
