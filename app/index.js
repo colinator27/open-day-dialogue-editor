@@ -517,7 +517,7 @@ function getAllCode(proj){
 
 app.on('ready', () => {
     // Show the main widnow
-    mainWindow = new BrowserWindow({ show: false, title: 'Open Day Dialogue Editor', width: 1280, height: 720 });
+    mainWindow = new BrowserWindow({ show: false, fullscreenable: false, title: 'Open Day Dialogue Editor', width: 1280, height: 720 });
     mainWindow.loadURL(url.format({
         pathname: path.join(getRootDir(), '/static/main.html'),
         protocol: 'file:',
@@ -555,7 +555,7 @@ app.on('ready', () => {
     })
 
     // Initialize the new project window
-    newProjectWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'New Project', show: false, width: 600, height: 400, resizable: false });
+    newProjectWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'New Project', show: false, width: 600, height: 400, resizable: false });
     newProjectWindow.loadURL(url.format({
         pathname: path.join(getRootDir(), '/static/new_project.html'),
         protocol: 'file:',
@@ -569,7 +569,7 @@ app.on('ready', () => {
     });
 
     // Initialize the project info window
-    projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
+    projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
     
     // Setup the main application menu
     mainWindowMenu = Menu.buildFromTemplate([
@@ -733,7 +733,7 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Show the window
-                        projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
+                        projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
                         projectInfoWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/project_info.html'),
                             protocol: 'file:',
@@ -743,7 +743,7 @@ app.on('ready', () => {
                         projectInfoWindow.once('ready-to-show', () => {
                             projectInfoWindow.show();
                             mainWindow.setClickInteraction(true);
-                            projectInfoWindow.on('close', e => {
+                            projectInfoWindow.on('closed', e => {
                                 mainWindow.setClickInteraction(false);
                                 console.log("Restoring focus to main window");
                             });
@@ -756,7 +756,7 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Show the window
-                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'New Scene', show: false, width: 600, height: 400, resizable: false });
+                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'New Scene', show: false, width: 600, height: 400, resizable: false });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_scene.html'),
                             protocol: 'file:',
@@ -766,7 +766,7 @@ app.on('ready', () => {
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
                             mainWindow.setClickInteraction(true);
-                            newItemWindow.on('close', e => {
+                            newItemWindow.on('closed', e => {
                                 mainWindow.setClickInteraction(false);
                                 console.log("Restoring focus to main window");
                             });
@@ -779,7 +779,7 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Show the window
-                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'New Definition Group', show: false, width: 600, height: 400, resizable: false });
+                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'New Definition Group', show: false, width: 600, height: 400, resizable: false });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_defgroup.html'),
                             protocol: 'file:',
@@ -789,7 +789,7 @@ app.on('ready', () => {
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
                             mainWindow.setClickInteraction(true);
-                            newItemWindow.on('close', e => {
+                            newItemWindow.on('closed', e => {
                                 mainWindow.setClickInteraction(false);
                                 console.log("Restoring focus to main window");
                             });
@@ -802,7 +802,7 @@ app.on('ready', () => {
                     enabled: false,
                     click(){
                         // Show the window
-                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'New Script', show: false, width: 600, height: 400, resizable: false });
+                        newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'New Script', show: false, width: 600, height: 400, resizable: false });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_script.html'),
                             protocol: 'file:',
@@ -812,7 +812,7 @@ app.on('ready', () => {
                         newItemWindow.once('ready-to-show', () => {
                             newItemWindow.show();
                             mainWindow.setClickInteraction(true);
-                            newItemWindow.on('close', e => {
+                            newItemWindow.on('closed', e => {
                                 mainWindow.setClickInteraction(false);
                                 console.log("Restoring focus to main window");
                             });
