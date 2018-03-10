@@ -18,10 +18,6 @@ BrowserWindow.prototype.setClickInteraction = function(ignore){
     }
 }
 
-function getWindowModal(window){
-    return useModal ? window : undefined;
-}
-
 function changesMade(){
     madeAnyChanges = true;
     mainWindow.setTitle(`Open Day Dialogue Editor - ${currentProject.name}*`);
@@ -141,7 +137,7 @@ function doesItemExist(fullName){
 }
 
 function alertBoxItemExists(){
-    dialog.showMessageBox(getWindowModal(newItemWindow), { title: 'Improper fields', type: 'error', message: 'An item with that name in that namespace already exists.' }, (number, checked) => {});
+    dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'An item with that name in that namespace already exists.' }, (number, checked) => {});
 }
 
 // Create a new project
@@ -333,7 +329,7 @@ ipcMain.on('async-list-node-context', (event, arg) => {
             click(){
                 let fullname = arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name;
                 mainWindow.setClickInteraction(true);
-                dialog.showMessageBox(getWindowModal(mainWindow), { title: 'Delete item?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: `Are you sure you want to delete item "${fullname}" permanently?` }, (number, checked) => {
+                dialog.showMessageBox(mainWindow, { title: 'Delete item?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: `Are you sure you want to delete item "${fullname}" permanently?` }, (number, checked) => {
                     mainWindow.setClickInteraction(false);
                     if (number == 0){
                         if(arg.type == "Scenes"){
@@ -399,22 +395,22 @@ ipcMain.on('sync-changes-made', (event, arg) => {
 ipcMain.on('sync-bad-fields-0', (event, arg) => {
     if(newProjectWindow != undefined && newProjectWindow.isVisible()){
         newProjectWindow.setClickInteraction(true);
-        dialog.showMessageBox(getWindowModal(newProjectWindow), { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!\nName and author must be given.' }, (number, checked) => {
+        dialog.showMessageBox(newProjectWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!\nName and author must be given.' }, (number, checked) => {
             newProjectWindow.setClickInteraction(false);
         });
     } else if(editWindow != undefined && editWindow.isVisible()){
         editWindow.setClickInteraction(true);
-        dialog.showMessageBox(getWindowModal(editWindow), { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+        dialog.showMessageBox(editWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
             editWindow.setClickInteraction(false);
         });
     } else if(projectInfoWindow != undefined && projectInfoWindow.isVisible()){
         projectInfoWindow.setClickInteraction(true);
-        dialog.showMessageBox(getWindowModal(projectInfoWindow), { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+        dialog.showMessageBox(projectInfoWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
             projectInfoWindow.setClickInteraction(false);
         });
     } else {
         newItemWindow.setClickInteraction(true);
-        dialog.showMessageBox(getWindowModal(newItemWindow), { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+        dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
             newItemWindow.setClickInteraction(false);
         });
     }
@@ -424,7 +420,7 @@ ipcMain.on('sync-bad-fields-0', (event, arg) => {
 // Displays an error of invalid characters used in a name/identifier
 ipcMain.on('sync-bad-fields-1', (event, arg) => {
     mainWindow.setClickInteraction(true);
-    dialog.showMessageBox(getWindowModal(newItemWindow), { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {
+    dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {
         mainWindow.setClickInteraction(false);
     });
     event.returnValue = 0;
@@ -544,7 +540,7 @@ app.on('ready', () => {
         e.preventDefault();
         if (madeAnyChanges){
             mainWindow.setClickInteraction(true);
-            dialog.showMessageBox(getWindowModal(mainWindow), { title: 'Quit?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: 'Quit and lose unsaved changes?' }, (number, checked) => {
+            dialog.showMessageBox(mainWindow, { title: 'Quit?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: 'Quit and lose unsaved changes?' }, (number, checked) => {
                 mainWindow.setClickInteraction(false);
                 if (number == 0)
                     app.exit();
@@ -603,7 +599,7 @@ app.on('ready', () => {
 
                                 // Verify that the project is valid
                                 if (!verifyProjectIntegrity(proj)){
-                                    dialog.showMessageBox(getWindowModal(mainWindow), { title: 'Failed to open project', type: 'error', message: 'The project file you attempted to open is corrupt.' }, (number, checked) => {});
+                                    dialog.showMessageBox(mainWindow, { title: 'Failed to open project', type: 'error', message: 'The project file you attempted to open is corrupt.' }, (number, checked) => {});
                                     return;
                                 }
 
@@ -716,7 +712,7 @@ app.on('ready', () => {
                             });
 
                             mainWindow.setClickInteraction(true);
-                            dialog.showMessageBox(getWindowModal(mainWindow), { title: 'Completed', type: 'info', message: 'Exported code successfully.' }, (number, checked) => {
+                            dialog.showMessageBox(mainWindow, { title: 'Completed', type: 'info', message: 'Exported code successfully.' }, (number, checked) => {
                                 mainWindow.setClickInteraction(false);
                             });
                         });
@@ -828,7 +824,7 @@ app.on('ready', () => {
                     label: 'About',
                     click(){
                         mainWindow.setClickInteraction(true);
-                        dialog.showMessageBox(getWindowModal(mainWindow), { title: 'About', type: 'info', message: 'Open Day Dialogue - by colinator27 and contributors\n\nGitHub repository (editor): https://github.com/colinator27/open-day-dialogue-editor\nGitHub repository (compiler): https://github.com/colinator27/open-day-dialogue-compiler\nGitHub repository (interpreters): https://github.com/colinator27/open-day-dialogue-interpreters' }, (number, checked) => {
+                        dialog.showMessageBox(mainWindow, { title: 'About', type: 'info', message: 'Open Day Dialogue - by colinator27 and contributors\n\nGitHub repository (editor): https://github.com/colinator27/open-day-dialogue-editor\nGitHub repository (compiler): https://github.com/colinator27/open-day-dialogue-compiler\nGitHub repository (interpreters): https://github.com/colinator27/open-day-dialogue-interpreters' }, (number, checked) => {
                             mainWindow.setClickInteraction(false);
                         });
                     }
