@@ -11,11 +11,13 @@ let currentProjectFilename = undefined;
 let currentProject = undefined;
 let madeAnyChanges = false;
 let useModal = (process.platform != 'darwin');
+let mainWindowIgnore = false;
 
 BrowserWindow.prototype.setClickInteraction = function(ignore){
     if(!useModal){
         this.setIgnoreMouseEvents(ignore);
     }
+    mainWindowIgnore = ignore;
 }
 
 function changesMade(){
@@ -155,10 +157,7 @@ ipcMain.on('sync-new-project', (event, arg) => {
 
     // Enable menus, change title, hide new project window
     enableProjectMenus();
-    newProjectWindow.hide();
-    newProjectWindow.reload();
-    mainWindow.setClickInteraction(false);
-    console.log("Restoring focus to main window.");
+    newProjectWindow.close();
 
     // Note this next line is kind of useless but we'll keep it here
     mainWindow.setTitle(`Open Day Dialogue Editor - ${currentProject.name}`);
@@ -313,16 +312,21 @@ ipcMain.on('async-list-node-context', (event, arg) => {
             click(){
                 editLastNode = arg;
                 editWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, title: 'Edit item', show: false, width: 600, height: 200, resizable: false });
+                mainWindow.setClickInteraction(true);
+                editWindow.on('closed', () => {
+                    editWindow = undefined;
+                    mainWindow.setClickInteraction(false);
+                });
+                editWindow.webContents.once('dom-ready', () => {
+                    editWindow.show();
+                    editWindow.webContents.send('data', { name: arg.name, namespace: arg.namespace });
+                });
                 editWindow.loadURL(url.format({
                     pathname: path.join(getRootDir(), '/static/edit.html'),
                     protocol: 'file:',
                     slashes: true
                 }));
                 editWindow.setMenu(null);
-                editWindow.once('ready-to-show', () => {
-                    editWindow.show();
-                    editWindow.webContents.send('data', { name: arg.name, namespace: arg.namespace });
-                });
                 m.closePopup();
             }
         },
@@ -521,7 +525,7 @@ app.on('ready', () => {
         protocol: 'file:',
         slashes: true
     }));
-    mainWindow.once('ready-to-show', () => {
+    mainWindow.webContents.once('dom-ready', () => {
         mainWindow.show();
     });
 
@@ -551,25 +555,7 @@ app.on('ready', () => {
             app.exit();
         }
     })
-
-    // Initialize the new project window
-    newProjectWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'New Project', show: false, width: 600, height: 400, resizable: false });
-    newProjectWindow.loadURL(url.format({
-        pathname: path.join(getRootDir(), '/static/new_project.html'),
-        protocol: 'file:',
-        slashes: true
-    }));
-    newProjectWindow.on('close', e => {
-        e.preventDefault();
-        newProjectWindow.hide();
-        newProjectWindow.reload();
-        mainWindow.setClickInteraction(false);
-        console.log("Restoring focus to main window.");
-    });
-
-    // Initialize the project info window
-    projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
-    
+   
     // Setup the main application menu
     mainWindowMenu = Menu.buildFromTemplate([
         {
@@ -578,15 +564,32 @@ app.on('ready', () => {
                 {
                     label: 'New Project',
                     click(){
+                        if (mainWindowIgnore)
+                            return;
+
+                        newProjectWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'New Project', show: false, width: 600, height: 400, resizable: false });
+                        newProjectWindow.webContents.once('dom-ready', () => {
+                            newProjectWindow.show();
+                            mainWindow.setClickInteraction(true);
+                            newProjectWindow.on('close', e => {
+                                mainWindow.setClickInteraction(false);
+                            });
+                        });
+                        newProjectWindow.loadURL(url.format({
+                            pathname: path.join(getRootDir(), '/static/new_project.html'),
+                            protocol: 'file:',
+                            slashes: true
+                        }));
                         newProjectWindow.setMenu(null);
-                        newProjectWindow.show();
-                        mainWindow.setClickInteraction(true);
                     }
                 },
                 {
                     label: 'Open Project',
                     accelerator: process.platform == 'darwin' ? 'Command+O' : 'Ctrl+O',
                     click(){
+                        if (mainWindowIgnore)
+                            return;
+
                         mainWindow.setClickInteraction(true);
                         dialog.showOpenDialog({ filters: [ { name: 'Open Day Dialogue Project', extensions: ['opdap'] } ], properties: ['openFile'] },
                         filenames => {
@@ -630,6 +633,9 @@ app.on('ready', () => {
                     enabled: false,
                     accelerator: process.platform == 'darwin' ? 'Command+S' : 'Ctrl+S',
                     click(){
+                        if (mainWindowIgnore)
+                            return;
+
                         // If the project has not been saved, open save dialog to choose the new file to create.
                         // Otherwise, save the file.
                         if (!currentProjectFilename){
@@ -669,6 +675,9 @@ app.on('ready', () => {
                     label: 'Save Project As',
                     enabled: false,
                     click(){
+                        if (mainWindowIgnore)
+                            return;
+                            
                         // Open the save dialog
                         mainWindow.setClickInteraction(true);
                         dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Project', extensions: ['opdap'] } ], properties: ['openFile'] },
@@ -700,6 +709,9 @@ app.on('ready', () => {
                     accelerator: process.platform == 'darwin' ? 'Command+E' : 'Ctrl+E',
                     enabled: false,
                     click(){
+                        if (mainWindowIgnore)
+                            return;
+
                         // Open save dialog for where the file should be output
                         mainWindow.setClickInteraction(true);
                         dialog.showSaveDialog({ filters: [ { name: 'Open Day Dialogue Script', extensions: ['opda'] } ], properties: ['openFile'] },
@@ -731,22 +743,25 @@ app.on('ready', () => {
                     label: 'View Info',
                     enabled: false,
                     click(){
+                        if (mainWindowIgnore)
+                            return;
+
                         // Show the window
                         projectInfoWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'Project Info', show: false, width: 600, height: 400, resizable: false });
+                        mainWindow.setClickInteraction(true);
+                        projectInfoWindow.webContents.once('dom-ready', () => {
+                            projectInfoWindow.show();
+                            projectInfoWindow.on('closed', e => {
+                                projectInfoWindow = undefined;
+                                mainWindow.setClickInteraction(false);
+                            });
+                        });
                         projectInfoWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/project_info.html'),
                             protocol: 'file:',
                             slashes: true
                         }));
                         projectInfoWindow.setMenu(null);
-                        projectInfoWindow.once('ready-to-show', () => {
-                            projectInfoWindow.show();
-                            mainWindow.setClickInteraction(true);
-                            projectInfoWindow.on('closed', e => {
-                                mainWindow.setClickInteraction(false);
-                                console.log("Restoring focus to main window");
-                            });
-                        });
                     }
                 },
                 {
@@ -754,22 +769,25 @@ app.on('ready', () => {
                     accelerator: process.platform == 'darwin' ? 'Alt+S' : 'Alt+S',
                     enabled: false,
                     click(){
+                        if (mainWindowIgnore)
+                            return;
+
                         // Show the window
                         newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'New Scene', show: false, width: 600, height: 400, resizable: false });
+                        mainWindow.setClickInteraction(true);
+                        newItemWindow.webContents.once('dom-ready', () => {
+                            newItemWindow.show();
+                            newItemWindow.on('closed', e => {
+                                newItemWindow = undefined;
+                                mainWindow.setClickInteraction(false);
+                            });
+                        });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_scene.html'),
                             protocol: 'file:',
                             slashes: true
                         }));
                         newItemWindow.setMenu(null);
-                        newItemWindow.once('ready-to-show', () => {
-                            newItemWindow.show();
-                            mainWindow.setClickInteraction(true);
-                            newItemWindow.on('closed', e => {
-                                mainWindow.setClickInteraction(false);
-                                console.log("Restoring focus to main window");
-                            });
-                        });
                     }
                 },
                 {
@@ -777,22 +795,25 @@ app.on('ready', () => {
                     accelerator: process.platform == 'darwin' ? 'Alt+D' : 'Alt+D',
                     enabled: false,
                     click(){
+                        if (mainWindowIgnore)
+                            return;
+
                         // Show the window
                         newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'New Definition Group', show: false, width: 600, height: 400, resizable: false });
+                        mainWindow.setClickInteraction(true);
+                        newItemWindow.webContents.once('dom-ready', () => {
+                            newItemWindow.show();
+                            newItemWindow.on('closed', e => {
+                                newItemWindow = undefined;
+                                mainWindow.setClickInteraction(false);
+                            });
+                        });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_defgroup.html'),
                             protocol: 'file:',
                             slashes: true
                         }));
                         newItemWindow.setMenu(null);
-                        newItemWindow.once('ready-to-show', () => {
-                            newItemWindow.show();
-                            mainWindow.setClickInteraction(true);
-                            newItemWindow.on('closed', e => {
-                                mainWindow.setClickInteraction(false);
-                                console.log("Restoring focus to main window");
-                            });
-                        });
                     }
                 },
                 {
@@ -800,22 +821,25 @@ app.on('ready', () => {
                     accelerator: process.platform == 'darwin' ? 'Alt+F' : 'Alt+F',
                     enabled: false,
                     click(){
+                        if (mainWindowIgnore)
+                            return;
+                            
                         // Show the window
                         newItemWindow = new BrowserWindow({ parent: mainWindow, modal: useModal, fullscreenable: false, title: 'New Script', show: false, width: 600, height: 400, resizable: false });
+                        mainWindow.setClickInteraction(true);
+                        newItemWindow.webContents.once('dom-ready', () => {
+                            newItemWindow.show();
+                            newItemWindow.on('closed', e => {
+                                newItemWindow = undefined;
+                                mainWindow.setClickInteraction(false);
+                            });
+                        });
                         newItemWindow.loadURL(url.format({
                             pathname: path.join(getRootDir(), '/static/new_script.html'),
                             protocol: 'file:',
                             slashes: true
                         }));
                         newItemWindow.setMenu(null);
-                        newItemWindow.once('ready-to-show', () => {
-                            newItemWindow.show();
-                            mainWindow.setClickInteraction(true);
-                            newItemWindow.on('closed', e => {
-                                mainWindow.setClickInteraction(false);
-                                console.log("Restoring focus to main window");
-                            });
-                        });
                     }
                 }
             ]
@@ -826,6 +850,9 @@ app.on('ready', () => {
                 {
                     label: 'About',
                     click(){
+                        if (mainWindowIgnore)
+                            return;
+
                         mainWindow.setClickInteraction(true);
                         dialog.showMessageBox(mainWindow, { title: 'About', type: 'info', message: 'Open Day Dialogue - by colinator27 and contributors\n\nGitHub repository (editor): https://github.com/colinator27/open-day-dialogue-editor\nGitHub repository (compiler): https://github.com/colinator27/open-day-dialogue-compiler\nGitHub repository (interpreters): https://github.com/colinator27/open-day-dialogue-interpreters' }, (number, checked) => {
                             mainWindow.setClickInteraction(false);
