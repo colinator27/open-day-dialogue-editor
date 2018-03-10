@@ -18,4 +18,4 @@ After that, you only need to run the following command to launch:
 `npm start`
 
 ### Build instructions
-If you're interested in building, head [here](https://github.com/colinator27/open-day-dialogue-editor/build-instructions.md) (or just look at `build-instructions.md`).
+If you're interested in building, head [here](https://github.com/colinator27/open-day-dialogue-editor/blob/master/build-instructions.md) (or just look at `build-instructions.md`).
