@@ -157,6 +157,8 @@ ipcMain.on('sync-new-project', (event, arg) => {
     enableProjectMenus();
     newProjectWindow.hide();
     newProjectWindow.reload();
+    mainWindow.setClickInteraction(false);
+    console.log("Restoring focus to main window.");
 
     // Note this next line is kind of useless but we'll keep it here
     mainWindow.setTitle(`Open Day Dialogue Editor - ${currentProject.name}`);
@@ -559,8 +561,6 @@ app.on('ready', () => {
     }));
     newProjectWindow.on('closed', e => {
         e.preventDefault();
-        newProjectWindow.hide();
-        newProjectWindow.reload();
         mainWindow.setClickInteraction(false);
         console.log("Restoring focus to main window.");
     });
