@@ -559,7 +559,7 @@ app.on('ready', () => {
         protocol: 'file:',
         slashes: true
     }));
-    newProjectWindow.on('closed', e => {
+    newProjectWindow.on('close', e => {
         e.preventDefault();
         newProjectWindow.hide();
         newProjectWindow.reload();
