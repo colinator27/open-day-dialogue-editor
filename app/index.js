@@ -426,9 +426,15 @@ ipcMain.on('sync-bad-fields-0', (event, arg) => {
 // Displays an error of invalid characters used in a name/identifier
 ipcMain.on('sync-bad-fields-1', (event, arg) => {
     mainWindow.setClickInteraction(true);
-    dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {
-        mainWindow.setClickInteraction(false);
-    });
+    if (editWindow != undefined && editWindow.isVisible()){
+        dialog.showMessageBox(editWindow, { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {
+            mainWindow.setClickInteraction(false);
+        });
+    } else {
+        dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {
+            mainWindow.setClickInteraction(false);
+        });
+    }
     event.returnValue = 0;
 });
 
