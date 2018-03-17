@@ -8,7 +8,7 @@ define("ace/mode/opendaydialogue", ["require","exports","module","ace/lib/oop","
     
     var OpenDayDialogueHighlightRules = function() {
         var keywords = (
-            "if|else|namespace|definitions|scene|choice"
+            "if|else|namespace|definitions|scene|choice|while|continue|break"
         );
         var builtinConstants = (
             "true|false|undefined"
