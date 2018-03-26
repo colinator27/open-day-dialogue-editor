@@ -5,7 +5,7 @@
   "main": "app/index.js",
   "dependencies": {
     "app-root-path": "^2.0.1",
-    "electron": "^1.7.12",
+    "electron": "^1.8.4",
     "indent-string": "^3.2.0"
   },
   "devDependencies": {},
