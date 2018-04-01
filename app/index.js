@@ -89,7 +89,7 @@ function getProjectJSON(){
         out.definitionGroups.push({ key: d, name: group.name, namespace: group.namespace, text: group.text });
     }
 
-    return JSON.stringify(out);
+    return JSON.stringify(out, null, 1);
 }
 
 // Properly de-serializes the JSON, in order
