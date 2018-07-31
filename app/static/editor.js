@@ -82,6 +82,7 @@ editor.selection.on("changeSelection", () => {
 
 // When an item is clicked, update the code editor
 let lastUndoKey;
+let undoMap = new Map();
 function itemClick(targ){
     // Get the name and type
     let name = htmlUnescape($(targ).children('p').get(0).innerHTML);
@@ -91,15 +92,6 @@ function itemClick(targ){
     let namespace;
     if(type != "Scripts")
         namespace = htmlUnescape($(targ).children('h3').get(0).innerHTML);
-
-    // Get the undo key
-    let undoKey = new SimpleItemData((namespace && namespace != "") ? (namespace + "." + name) : name, type).key;
-    if(undoKey != lastUndoKey){
-        lastUndoKey = undoKey;
-
-        // Setting it to null seems to actually work, instead of creating a new one? Not sure.
-        editor.getSession().setUndoManager(null);
-    }
 
     // Set the namespace text if it applies
     if (namespace && namespace != "")
@@ -112,6 +104,19 @@ function itemClick(targ){
 
     // Update the text editor's code contents, reset cursor position
     editor.setValue(ipcRenderer.sendSync('sync-get-item-text', { name: name, namespace: namespace, type: type }), -1);
+
+    // Reset the undo history if we're not clicking on the same item
+    let undoKey = new SimpleItemData((namespace && namespace != "") ? (namespace + "." + name) : name, type).key;
+    if(undoKey != lastUndoKey){
+        if (undoMap.has(undoKey)){
+            editor.getSession().setUndoManager(undoMap.get(undoKey));
+        } else {
+            editor.getSession().setUndoManager(new ace.UndoManager());
+        }
+
+        undoMap.set(undoKey, editor.getSession().getUndoManager());
+        lastUndoKey = undoKey;
+    }
 
     // Make the editor visible
     showEditor();

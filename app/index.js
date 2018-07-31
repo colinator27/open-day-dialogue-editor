@@ -5,14 +5,26 @@ const fs = require('fs');
 
 const {app, BrowserWindow, Menu, dialog, ipcMain, globalShortcut} = electron;
 
+// Different electron window handles
 let mainWindow, mainWindowMenu;
 let newProjectWindow, newItemWindow, projectInfoWindow, editWindow;
+
+// The filename of the current project file
 let currentProjectFilename = undefined;
+
+// The current project data
 let currentProject = undefined;
+
+// Whether or not the project had been modified since the last save
 let madeAnyChanges = false;
+
+// Whether or not to use modal windows
 let useModal = (process.platform != 'darwin');
+
+// Whether or not the window can be interacted with (used primarily on non-Windows platform)
 let mainWindowIgnore = false;
 
+// Makes the window ignore mouse events if necessary, primarily on a non-Windows platform
 BrowserWindow.prototype.setClickInteraction = function(ignore){
     if(!useModal){
         this.setIgnoreMouseEvents(ignore);
@@ -20,6 +32,7 @@ BrowserWindow.prototype.setClickInteraction = function(ignore){
     mainWindowIgnore = ignore;
 }
 
+// When called, indicates that the project has been modified since the last save
 function changesMade(){
     madeAnyChanges = true;
     mainWindow.setTitle(`Open Day Dialogue Editor - ${currentProject.name}*`);
@@ -142,6 +155,10 @@ function alertBoxItemExists(){
     dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'An item with that name in that namespace already exists.' }, (number, checked) => {});
 }
 
+function updateProjectTree(){
+    mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
+}
+
 // Create a new project
 ipcMain.on('sync-new-project', (event, arg) => {
     // Initialize a blank project object
@@ -171,29 +188,44 @@ ipcMain.on('sync-new-project', (event, arg) => {
     event.returnValue = 0;
 });
 
+// Returns the full name for a project tree item, dealing with namespaces
+function itemFullName(arg){
+    return (arg.namespace != null && arg.namespace != "") ? (arg.namespace + "." + arg.name) : arg.name;
+}
+
 // Create a new scene
 ipcMain.on('sync-new-scene', (event, arg) => {
-    if(doesItemExist(arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name)){
+    // Confirm that the item doesn't already exist
+    if(doesItemExist(itemFullName(arg))){
         alertBoxItemExists();
         event.returnValue = 1;
         return;
     }
-    currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name] = { name: arg.name, namespace: arg.namespace, text: "// Enter your scene here" };
-    mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
+
+    // Create a new scene with default content
+    currentProject.scenes[itemFullName(arg)] = { name: arg.name, namespace: arg.namespace, text: "// Enter your scene here" };
+    
+    updateProjectTree();
     changesMade();
+
     newItemWindow.close();
     event.returnValue = 0;
 });
 
 // Create a new definition group
 ipcMain.on('sync-new-defgroup', (event, arg) => {
-    if(doesItemExist(arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name)){
+    // Confirm that the item doesn't already exist
+    if(doesItemExist(itemFullName(arg))){
         alertBoxItemExists();
         event.returnValue = 1;
         return;
     }
-    currentProject.definitionGroups[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name] = { name: arg.name, namespace: arg.namespace, text: "// Enter your definitions here" };
-    mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
+
+    // Create a new definition group with default content
+    currentProject.definitionGroups[itemFullName(arg)] = { name: arg.name, namespace: arg.namespace, text: "// Enter your definitions here" };
+    
+    // Update the project tree
+    updateProjectTree();
     changesMade();
     newItemWindow.close();
     event.returnValue = 0;
@@ -201,19 +233,27 @@ ipcMain.on('sync-new-defgroup', (event, arg) => {
 
 // Create a new script
 ipcMain.on('sync-new-script', (event, arg) => {
+    // Duplicate names don't matter, because the script names are never used
+
+    // Create a new script with default content
     currentProject.scripts.push({ name: arg.name, text: "// Enter your script here" });
-    mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
+    
+    updateProjectTree();
     changesMade();
+
     newItemWindow.close();
     event.returnValue = 0;
 });
 
 // When updating the project info
 ipcMain.on('sync-update-project-info', (event, arg) => {
+    // Update each field
     currentProject.name = arg.name;
     currentProject.author = arg.author;
     currentProject.info = arg.info;
+
     changesMade();
+
     projectInfoWindow.close();
     event.returnValue = 0;
 });
@@ -223,12 +263,8 @@ ipcMain.on('sync-item-edit', (event, arg) => {
     editWindow.close();
     if(editLastNode.type == "Scenes"){
         // Get the old and new keys 
-        let old_key = (editLastNode.namespace != undefined && editLastNode.namespace) != "" 
-                        ? (editLastNode.namespace + "." + editLastNode.name) 
-                        : editLastNode.name;
-        let new_key = (arg.namespace != undefined && arg.namespace != "")
-                        ? (arg.namespace + "." + arg.name)
-                        : arg.name;
+        let old_key = itemFullName(editLastNode);
+        let new_key = itemFullName(arg);
 
         // Figure out the order
         let scenes_old = Object.assign({}, currentProject.scenes);
@@ -259,12 +295,8 @@ ipcMain.on('sync-item-edit', (event, arg) => {
         }
     } else if(editLastNode.type == "Definition Groups"){
         // Get the old and new keys 
-        let old_key = (editLastNode.namespace != undefined && editLastNode.namespace) != "" 
-                        ? (editLastNode.namespace + "." + editLastNode.name) 
-                        : editLastNode.name;
-        let new_key = (arg.namespace != undefined && arg.namespace != "")
-                        ? (arg.namespace + "." + arg.name)
-                        : arg.name;
+        let old_key = itemFullName(editLastNode);
+        let new_key = itemFullName(arg);
 
         // Figure out the order
         let defgroups_old = Object.assign({}, currentProject.definitionGroups);
@@ -300,7 +332,7 @@ ipcMain.on('sync-item-edit', (event, arg) => {
             }
         }
     }
-    mainWindow.webContents.send('async-update-tree', { currProject: JSON.stringify(currentProject) });
+    updateProjectTree();
     changesMade();
 });
 
@@ -333,15 +365,15 @@ ipcMain.on('async-list-node-context', (event, arg) => {
         {
             label: 'Delete',
             click(){
-                let fullname = arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name;
+                let fullname = itemFullName(arg);
                 mainWindow.setClickInteraction(true);
                 dialog.showMessageBox(mainWindow, { title: 'Delete item?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: `Are you sure you want to delete item "${fullname}" permanently?` }, (number, checked) => {
                     mainWindow.setClickInteraction(false);
                     if (number == 0){
                         if(arg.type == "Scenes"){
-                            delete currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name];
+                            delete currentProject.scenes[itemFullName(arg)];
                         } else if(arg.type == "Definition Groups"){
-                            delete currentProject.definitionGroups[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name];
+                            delete currentProject.definitionGroups[itemFullName(arg)];
                         } else if(arg.type == "Scripts"){
                             for(let i = 0; i < currentProject.scripts.length; i++){
                                 if(currentProject.scripts[i].name == arg.name){
@@ -399,24 +431,28 @@ ipcMain.on('sync-changes-made', (event, arg) => {
 
 // Displays an error about blank fields
 ipcMain.on('sync-bad-fields-0', (event, arg) => {
+
+    const msg = 'All necessary fields must be filled!';
+    const title = 'Improper fields';
+
     if(newProjectWindow != undefined && newProjectWindow.isVisible()){
         newProjectWindow.setClickInteraction(true);
-        dialog.showMessageBox(newProjectWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!\nName and author must be given.' }, (number, checked) => {
+        dialog.showMessageBox(newProjectWindow, { title: title, type: 'error', message: msg + '\nName and author must be given.' }, (number, checked) => {
             newProjectWindow.setClickInteraction(false);
         });
     } else if(editWindow != undefined && editWindow.isVisible()){
         editWindow.setClickInteraction(true);
-        dialog.showMessageBox(editWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+        dialog.showMessageBox(editWindow, { title: title, type: 'error', message: msg }, (number, checked) => {
             editWindow.setClickInteraction(false);
         });
     } else if(projectInfoWindow != undefined && projectInfoWindow.isVisible()){
         projectInfoWindow.setClickInteraction(true);
-        dialog.showMessageBox(projectInfoWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+        dialog.showMessageBox(projectInfoWindow, { title: title, type: 'error', message: msg }, (number, checked) => {
             projectInfoWindow.setClickInteraction(false);
         });
     } else {
         newItemWindow.setClickInteraction(true);
-        dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'All necessary fields must be filled!' }, (number, checked) => {
+        dialog.showMessageBox(newItemWindow, { title: title, type: 'error', message: msg }, (number, checked) => {
             newItemWindow.setClickInteraction(false);
         });
     }
@@ -426,12 +462,16 @@ ipcMain.on('sync-bad-fields-0', (event, arg) => {
 // Displays an error of invalid characters used in a name/identifier
 ipcMain.on('sync-bad-fields-1', (event, arg) => {
     mainWindow.setClickInteraction(true);
+
+    const msg = 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.';
+    const title = 'Improper fields';
+
     if (editWindow != undefined && editWindow.isVisible()){
-        dialog.showMessageBox(editWindow, { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {
+        dialog.showMessageBox(editWindow, { title: 'Improper fields', type: 'error', message: msg }, (number, checked) => {
             mainWindow.setClickInteraction(false);
         });
     } else {
-        dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: 'Invalid identifier!\n\nOnly "A-z", "0-9", "_", "@", and "." characters can be used in names.\nThey must start with "A-z", "@", or "_".\n"@" can only be placed at the beginning, and is used to allow keywords.\nKeywords without a prepended "@" are not allowed.' }, (number, checked) => {
+        dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: msg }, (number, checked) => {
             mainWindow.setClickInteraction(false);
         });
     }
@@ -439,12 +479,13 @@ ipcMain.on('sync-bad-fields-1', (event, arg) => {
 });
 
 // Gets the text content of an item
+// Used to display text on the text editor
 ipcMain.on('sync-get-item-text', (event, arg) => {
     let txt = "// An error occurred when getting the content of the item.";
     if(arg.type == "Scenes"){
-        txt = currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name].text;
+        txt = currentProject.scenes[itemFullName(arg)].text;
     } else if(arg.type == "Definition Groups"){
-        txt = currentProject.definitionGroups[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name].text;
+        txt = currentProject.definitionGroups[itemFullName(arg)].text;
     } else if(arg.type == "Scripts"){
         currentProject.scripts.forEach(s => {
             if(s.name == arg.name)
@@ -454,12 +495,12 @@ ipcMain.on('sync-get-item-text', (event, arg) => {
     event.returnValue = txt;
 });
 
-// Updates the text content of an item
+// Updates the text content of an item (in the project data/memory)
 ipcMain.on('sync-update-item-text', (event, arg) => {
     if(arg.type == "Scenes"){
-        currentProject.scenes[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name].text = arg.text;
+        currentProject.scenes[itemFullName(arg)].text = arg.text;
     } else if(arg.type == "Definition Groups"){
-        currentProject.definitionGroups[arg.namespace != "" ? (arg.namespace + "." + arg.name) : arg.name].text = arg.text;
+        currentProject.definitionGroups[itemFullName(arg)].text = arg.text;
     } else if(arg.type == "Scripts"){
         for (var index in currentProject.scripts){
             if(currentProject.scripts[index].name == arg.name){
