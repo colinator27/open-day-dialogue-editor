@@ -3,7 +3,7 @@ function isStringValid(str){
     let s = str.replace(/[\w][\w\d\.]*$/, "");
 
     // Make sure keywords begin with a "@" symbol
-    if (/^(?:if|else|namespace|definitions|scene|choice)$/.test(str)){
+    if (/^(?:if|else|namespace|definitions|scene|choice|while|continue|break)$/.test(str)){
         return false;
     } else if(/^\@.*$/.test(str) && s == "@"){
         return true;

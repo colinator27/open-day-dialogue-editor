@@ -44,7 +44,7 @@ function getRootDir(){
 }
 
 // Verifies that the project is not corrupt
-function verifyProjectIntegrity(proj, special = false){
+function verifyProjectIntegrity(proj, special = false /* one-case scenario, typically for early deserialization */){
     // Check that the base fields exist
     if (proj.name == undefined || proj.author == undefined || proj.info == undefined || !proj.scenes || !proj.definitionGroups || !proj.scripts)
         return false;
@@ -336,7 +336,7 @@ ipcMain.on('sync-item-edit', (event, arg) => {
     changesMade();
 });
 
-// Context menu when clicking on item in tree
+// Context menu when (right) clicking on item in tree
 ipcMain.on('async-list-node-context', (event, arg) => {
     let m = Menu.buildFromTemplate([
         {
@@ -393,7 +393,9 @@ ipcMain.on('async-list-node-context', (event, arg) => {
     m.popup();
 });
 
-// Called when the project tree's order has been changed
+// Called when the project tree's order has been changed.
+// Makes the order of the tree in the memory-held
+// project instance become what is desired.
 ipcMain.on('sync-tree-reorder', (event, arg) => {
     if(arg.type == "Scenes"){
         let oldItems = currentProject.scenes;
@@ -467,11 +469,11 @@ ipcMain.on('sync-bad-fields-1', (event, arg) => {
     const title = 'Improper fields';
 
     if (editWindow != undefined && editWindow.isVisible()){
-        dialog.showMessageBox(editWindow, { title: 'Improper fields', type: 'error', message: msg }, (number, checked) => {
+        dialog.showMessageBox(editWindow, { title: title, type: 'error', message: msg }, (number, checked) => {
             mainWindow.setClickInteraction(false);
         });
     } else {
-        dialog.showMessageBox(newItemWindow, { title: 'Improper fields', type: 'error', message: msg }, (number, checked) => {
+        dialog.showMessageBox(newItemWindow, { title: title, type: 'error', message: msg }, (number, checked) => {
             mainWindow.setClickInteraction(false);
         });
     }
@@ -519,6 +521,7 @@ ipcMain.on('async-get-project-info', (event, arg) => {
 
 // Enables certain application menu options once a project is loaded
 function enableProjectMenus(){
+    // Could use loops, but this could technically be more efficient
     mainWindowMenu.items[0].submenu.items[3].enabled = true;
     mainWindowMenu.items[0].submenu.items[4].enabled = true;
     mainWindowMenu.items[0].submenu.items[5].enabled = true;
@@ -576,7 +579,7 @@ app.on('ready', () => {
         mainWindow.show();
     });
 
-    // Register zooming in and out shortcuts
+    // Register zooming in and out shortcuts for the text editor
     globalShortcut.register('CommandOrControl+=', () => {
         if(!mainWindow.isFocused())
             return;
@@ -592,6 +595,8 @@ app.on('ready', () => {
     mainWindow.on('close', e => {
         e.preventDefault();
         if (madeAnyChanges){
+            // Display quit message box, if the current project has not been saved
+            // since the last modification.
             mainWindow.setClickInteraction(true);
             dialog.showMessageBox(mainWindow, { title: 'Quit?', type: 'warning', defaultId: 1, buttons: ['Yes', 'No'], message: 'Quit and lose unsaved changes?' }, (number, checked) => {
                 mainWindow.setClickInteraction(false);
@@ -599,6 +604,7 @@ app.on('ready', () => {
                     app.exit();
             });
         } else {
+            // No unsaved changes are left on the project, so it's okay to close.
             app.exit();
         }
     })
