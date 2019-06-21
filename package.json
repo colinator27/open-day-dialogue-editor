@@ -4,9 +4,9 @@
   "description": "An editor for Open Day Dialogue",
   "main": "app/index.js",
   "dependencies": {
-    "app-root-path": "^2.0.1",
-    "electron": "^1.8.4",
-    "hoek": "^5.0.3",
+    "app-root-path": "^2.2.1",
+    "electron": "^1.8.8",
+    "hoek": "^5.0.4",
     "indent-string": "^3.2.0"
   },
   "devDependencies": {},
